@@ -5,13 +5,16 @@ from collections import Counter
 import matplotlib
 from matplotlib import cm
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap
-import argparse
 
-matplotlib.use('Agg')
+matplotlib.use('Agg') # matplotlib 'headless' error bandaid
 import matplotlib.pyplot as plt
 import socket
 import os
 from random import randint
+
+# slazaru changes
+from pathlib import Path
+import argparse
 
 # geoip stuff
 # ross@nuc:~/rossgit/PcapViz$ python3
@@ -38,9 +41,16 @@ from random import randint
 
 parser = argparse.ArgumentParser(description='Make word clouds from pcap files')
 parser.add_argument('pcap', help='the pcap to process')
+parser.add_argument('dir', help='the directory to save the output')
 args = parser.parse_args()
+dir = os.path.abspath(args.dir)
+infname = os.path.abspath(args.pcap)
 
-infname = args.pcap
+# make path if it doesn't exist
+p = Path(dir)
+p.mkdir(mode=0o755, parents=False, exist_ok=False)
+os.chdir(dir)
+
 pnames = ['IP','TCP','ARP','UDP','ICMP']
 pobj = [IP,TCP,ARP,UDP,ICMP]
 

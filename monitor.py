@@ -21,10 +21,17 @@ def check_for_new():
             dir = '/var/www/html/' + id
             print("making directory: " + dir)
             os.mkdir(dir)
-            run_tests()
+            run_tests(id)
 
-def run_tests():
-    pass
+def run_tests(id):
+    # nmap
+    # TODO: prompt for which tests to run, for now just do them all
+    ip = id.split(_)
+    print("ip: " + ip)
+    print("cwd: " + os.getcwd())
+    cmd = "sudo nmap " + ip + " > /var/www/html/" + id + "/nmap" 
+    print(cmd)
+    os.system(cmd)
 
 if __name__ == "__main__":
     os.chdir('/usr/local/zeek/logs/current')
