@@ -2,16 +2,44 @@ import time
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
 import os
+import re
+
+# set of device ip:mac addresses that we've seen already
+seen = set()
+
+# if there's a device in dhcp.log that doesn't have a corresponding directory
+# in /var/www/html, create the directory and run some tests
+def check_for_new():
+    f = open('/usr/local/zeek/logs/current/dhcp.log', 'r')
+    for el in f:
+        if el[0] == '#': #its a comment, skip 
+            continue
+        vals = re.split(r'\t+',el)
+        id = vals[2] + "_" + vals[4]
+        if id not in seen:
+            print("new device found: " + id)
+            dir = '/var/www/html/' + id
+            print("making directory: " + dir)
+            os.mkdir(dir)
+            run_tests()
+
+def run_tests():
+    pass
 
 if __name__ == "__main__":
-    print(os.getcwd())
     os.chdir('/usr/local/zeek/logs/current')
-    print(os.getcwd())
     patterns = ["./dhcp.log"]
     ignore_patterns = ""
     ignore_directories = False
     case_sensitive = True
     my_event_handler = PatternMatchingEventHandler(patterns, ignore_patterns, ignore_directories, case_sensitive)
+    dirs = os.listdir('/var/www/html')
+    for el in dirs:
+        seen.add(el)
+    print("seen:")
+    print(seen)
+    if os.path.isfile('/usr/local/zeek/logs/current/dhcp.log'):
+        check_for_new()
 
 def on_created(event):
     print("%s has been created!" %(event.src_path))
@@ -21,6 +49,8 @@ def on_deleted(event):
 
 def on_modified(event):
     print("%s has been modified" %(event.src_path))
+    if os.path.isfile('/usr/local/zeek/logs/current/dhcp.log'):
+        check_for_new()
 
 def on_moved(event):
     print("moved %s to %s" %(event.src_path, event.dest_path))
