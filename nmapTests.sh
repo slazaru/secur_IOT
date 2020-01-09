@@ -1,11 +1,16 @@
 #!/bin/bash
-# original credit to 21y4d
+# credit to 21y4d
 # https://github.com/21y4d/nmapAutomator
 
-RED='\033[0;31m'
-YELLOW='\033[0;33m'
-GREEN='\033[0;32m'
-NC='\033[0m'
+#RED='\033[0;31m'
+#YELLOW='\033[0;33m'
+#GREEN='\033[0;32m'
+#NC='\033[0m'
+
+RED=''
+YELLOW=''
+GREEN=''
+NC=''
 
 SECONDS=0
 
@@ -546,3 +551,4 @@ else
 	echo -e "${RED}"
 	usage
 fi
+

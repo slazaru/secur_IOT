@@ -1,37 +1,47 @@
+
 import time
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
 import os
 import re
+from pathlib import Path
+import subprocess
 
-# set of device ip:mac addresses that we've seen already
-seen = set()
-
-# if there's a device in dhcp.log that doesn't have a corresponding directory
-# in /var/www/html, create the directory and run some tests
-def check_for_new():
+def process_new_line():
+    if not os.path.isfile('/usr/local/zeek/logs/current/dhcp.log'):
+        return
     f = open('/usr/local/zeek/logs/current/dhcp.log', 'r')
-    for el in f:
-        if el[0] == '#': #its a comment, skip 
-            continue
-        vals = re.split(r'\t+',el)
-        id = vals[2] + "_" + vals[4]
-        if id not in seen:
-            print("new device found: " + id)
-            dir = '/var/www/html/' + id
-            print("making directory: " + dir)
-            os.mkdir(dir)
-            run_tests(id)
+    lines = f.readlines()
+    new_line = lines[-1]
+    vals = re.split(r'\t+', new_line)
+    id = vals[2] + "_" + vals[4]
+    dir = '/var/www/html/' + id
+    p = Path(dir)
+    p.mkdir(mode=0o755, parents=True, exist_ok=True)
+    run_tests(id)
 
 def run_tests(id):
-    # nmap
-    # TODO: prompt for which tests to run, for now just do them all
-    ip = id.split(_)
-    print("ip: " + ip)
-    print("cwd: " + os.getcwd())
-    cmd = "sudo nmap " + ip + " > /var/www/html/" + id + "/nmap" 
-    print(cmd)
-    os.system(cmd)
+    ip = id.split('_')[0]
+    print("A device [ " + id + " ] just made a DHCP request.")
+    txt = input("Would you like to run tests on this device? (y/n)")
+    if txt != 'Y' and txt != 'y':
+        print("Not running tests")
+        return
+    dir = '/var/www/html/' + id + '/nmap'
+    p = Path(dir)
+    p.mkdir(mode=0o755, parents=True, exist_ok=True)
+    dir = '/var/www/html/' + id + '/nmap/' + 'Quick'
+    cmd = ['sudo', 'nmapTests.sh', ip, 'Quick']
+    print("Running " + ' '.join(cmd))
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+    f = open(dir, "w+")
+    for line in p.stdout:
+        line=line.decode('ascii')
+        print(line)
+        f.write(line)
+    p.wait()
+    f.close()
+    print(p.returncode)
 
 if __name__ == "__main__":
     os.chdir('/usr/local/zeek/logs/current')
@@ -40,13 +50,6 @@ if __name__ == "__main__":
     ignore_directories = False
     case_sensitive = True
     my_event_handler = PatternMatchingEventHandler(patterns, ignore_patterns, ignore_directories, case_sensitive)
-    dirs = os.listdir('/var/www/html')
-    for el in dirs:
-        seen.add(el)
-    print("seen:")
-    print(seen)
-    if os.path.isfile('/usr/local/zeek/logs/current/dhcp.log'):
-        check_for_new()
 
 def on_created(event):
     print("%s has been created!" %(event.src_path))
@@ -56,8 +59,7 @@ def on_deleted(event):
 
 def on_modified(event):
     print("%s has been modified" %(event.src_path))
-    if os.path.isfile('/usr/local/zeek/logs/current/dhcp.log'):
-        check_for_new()
+    process_new_line()
 
 def on_moved(event):
     print("moved %s to %s" %(event.src_path, event.dest_path))

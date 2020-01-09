@@ -48,7 +48,7 @@ infname = os.path.abspath(args.pcap)
 
 # make path if it doesn't exist
 p = Path(dir)
-p.mkdir(mode=0o755, parents=False, exist_ok=False)
+p.mkdir(mode=0o755, parents=True, exist_ok=True)
 os.chdir(dir)
 
 pnames = ['IP','TCP','ARP','UDP','ICMP']
