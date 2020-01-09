@@ -2,7 +2,7 @@
 
 ### Description
 
-An environment to test sketchy IoT devices. When the IoT device sends a DHCP request to the router, several tests are run and are published on the router's web server. This project is WIP, don't expect any of it to work.
+An environment to test sketchy IoT devices. When the IoT device sends a DHCP request to the router, several tests are run and are published on the router's web server. This project is WIP.
 
 ### Requirements
 
@@ -14,7 +14,7 @@ I used a Raspberry Pi 4.
 
 ### Setup
 
-For the setup instructions I'll assume you're using a RPI 2/3/4, but any Debian-based distro should work.
+For the setup instructions I'll assume you're using a RPI 2/3/4, but any Debian-based distro should work with some fiddling.
 
 #### Python setup
 
@@ -41,11 +41,10 @@ For the setup instructions I'll assume you're using a RPI 2/3/4, but any Debian-
 
 `sudo apt-get install nmap`
 
-find where the nmap scripts live `find / -name "*.nse" 2>/dev/null`
+Find where the nmap scripts live `find / -name "*.nse" 2>/dev/null`
 
-add https://github.com/vulnersCom/nmap-vulners/blob/master/http-vulners-regex.nse to scripts dir (there's a copy in this repo)
-
-`wget https://raw.githubusercontent.com/vulnersCom/nmap-vulners/master/http-vulners-regex.nse -O /usr/share/nmap/scripts/http-vulners-regex.nse`
+Add https://github.com/vulnersCom/nmap-vulners/blob/master/vulners.nse to the scripts dir above (there's a copy in this repo), or
+`wget https://raw.githubusercontent.com/vulnersCom/nmap-vulners/master/http-vulners-regex.nse -O /usr/share/nmap/scripts/vulners.nse`
 
 Make symbolic link so nmapTests.sh can be run anywhere
 `sudo ln -s /home/pi/secur_IOT/nmapTests.sh /usr/local/bin/`
@@ -55,9 +54,25 @@ Add execute permission to nmapTests.sh
 
 #### gobuster
 `sudo apt-get install gobuster`
+Move common.txt to /usr/share/wordlists/dirb/common.txt
+`cp common.txt /usr/share/wordlists/dirb/common.txt`
+`cp directory-list-2.3-medium.txt /usr/share/wordlists/dirb/directory-list-2.3-medium.txt`
 
 #### nikto
 `sudo apt-get install nikto`
+
+#### sslscan
+`sudo apt-get install sslscan`
+
+#### dnsrecon
+https://github.com/darkoperator/dnsrecon/wiki/Installation-Instructions
+`pip install netaddr`
+`pip install dnspython`
+`sudo apt-get install python-lxml`
+`git clone https://github.com/darkoperator/dnsrecon.git`
+`cp dnsrecon.py dnsrecon`
+`sudo ln -s /home/pi/opt/dnsrecon/dnsrecon /usr/bin` (or wherever you put the git repo)
+You should now be able to run dnsrecon from bash in any directory
 
 #### Wireless access point
 https://github.com/SurferTim/documentation/blob/6bc583965254fa292a470990c40b145f553f6b34/configuration/wireless/access-point.md
