@@ -2,7 +2,7 @@
 
 ### Description
 
-This project is WIP, don't expect any of it to work.
+An environment to test sketchy IoT devices. When the IoT device sends a DHCP request to the router, several tests are run and are published on the router's web server. This project is WIP, don't expect any of it to work.
 
 ### Requirements
 
@@ -47,6 +47,17 @@ add https://github.com/vulnersCom/nmap-vulners/blob/master/http-vulners-regex.ns
 
 `wget https://raw.githubusercontent.com/vulnersCom/nmap-vulners/master/http-vulners-regex.nse -O /usr/share/nmap/scripts/http-vulners-regex.nse`
 
+Make symbolic link so nmapTests.sh can be run anywhere
+`sudo ln -s /home/pi/secur_IOT/nmapTests.sh /usr/local/bin/`
+
+Add execute permission to nmapTests.sh
+`chmod +x nmapTests.sh`
+
+#### gobuster
+`sudo apt-get install gobuster`
+
+#### nikto
+`sudo apt-get install nikto`
 
 #### Wireless access point
 https://github.com/SurferTim/documentation/blob/6bc583965254fa292a470990c40b145f553f6b34/configuration/wireless/access-point.md
@@ -84,6 +95,7 @@ Stop after "Testing the webserver" section.
 Use the nginx config files supplied in this repo
 
 Make a symlink from /var/www/html/zeek_logs to /usr/local/zeek/logs/current so they're browsable
+`sudo ln -s /usr/local/zeek/logs/current zeek_logs`
 
 Run the monitor.py script.
 
