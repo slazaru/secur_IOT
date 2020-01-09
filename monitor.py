@@ -30,18 +30,22 @@ def run_tests(id):
     dir = '/var/www/html/' + id + '/nmap'
     p = Path(dir)
     p.mkdir(mode=0o755, parents=True, exist_ok=True)
-    dir = '/var/www/html/' + id + '/nmap/' + 'Quick'
-    cmd = ['sudo', 'nmapTests.sh', ip, 'Quick']
-    print("Running " + ' '.join(cmd))
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-    f = open(dir, "w+")
-    for line in p.stdout:
-        line=line.decode('ascii')
-        print(line)
-        f.write(line)
-    p.wait()
-    f.close()
-    print(p.returncode)
+    #scans = ['Quick', 'Basic', 'Vulns', 'Recon']
+    scans = ['Recon']
+    for scan in scans:
+        dir = '/var/www/html/' + id + '/nmap/' + scan
+        cmd = ['sudo', 'nmapTests.sh', ip, scan]
+        print("Running " + ' '.join(cmd))
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        f = open(dir, "w+")
+        for line in p.stdout:
+            line=line.decode('ascii')
+            print(line)
+            f.write(line)
+        p.wait()
+        f.close()
+    # note that nmapTests.sh will spit some files out in the cwd
+    # could clear them up here if necessary ..
 
 if __name__ == "__main__":
     os.chdir('/usr/local/zeek/logs/current')
@@ -50,6 +54,8 @@ if __name__ == "__main__":
     ignore_directories = False
     case_sensitive = True
     my_event_handler = PatternMatchingEventHandler(patterns, ignore_patterns, ignore_directories, case_sensitive)
+    # test 
+    run_tests("192.168.4.1_00:ec:0a:ca:e9:ea/")
 
 def on_created(event):
     print("%s has been created!" %(event.src_path))

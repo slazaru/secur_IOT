@@ -270,39 +270,41 @@ reconRecommend $1 | tee nmap/Recon_$1.nmap
 
 availableRecon=`cat nmap/Recon_$1.nmap | grep $1 | cut -d " " -f 1 | sed 's/.\///g; s/.py//g; s/cd/odat/g;' | sort -u | tr "\n" "," | sed 's/,/,\ /g' | head -c-2`
 
-secs=30
+secs=1
 count=0
 
 reconCommand=""
 
 if [ ! -z "$availableRecon"  ]; then
-	while [ ! `echo "${reconCommand}"` == "!" ]; do
-		echo -e "${YELLOW}"
-		echo -e "Which commands would you like to run?${NC}\nAll (Default), $availableRecon, Skip <!>\n"
-		while [[ ${count} -lt ${secs} ]]; do
-			tlimit=$(( $secs - $count ))
-			echo -e "\rRunning Default in (${tlimit}) s: \c"
-			read -t 1 reconCommand
-			[ ! -z "$reconCommand" ] && { break ;  }
-			count=$((count+1))
-		done
-		if [ "$reconCommand" == "All" ] || [ -z `echo "${reconCommand}"` ]; then
-			runRecon $1 "All"
-			reconCommand="!"
-		elif [[ "$reconCommand" =~ ^($(echo "${availableRecon}" | tr ", " "|"))$ ]]; then
-			runRecon $1 $reconCommand
-			reconCommand="!"
-		elif [ "$reconCommand" == "Skip" ] || [ "$reconCommand" == "!" ]; then
-			reconCommand="!"
-			echo -e ""
-			echo -e ""
-			echo -e ""
-		else
-			echo -e "${NC}"
-			echo -e "${RED}Incorrect choice!"
-			echo -e "${NC}"
-		fi
-	done
+#	while [ ! `echo "${reconCommand}"` == "!" ]; do
+#		echo -e "${YELLOW}"
+#		echo -e "Which commands would you like to run?${NC}\nAll (Default), $availableRecon, Skip <!>\n"
+#		while [[ ${count} -lt ${secs} ]]; do
+#			tlimit=$(( $secs - $count ))
+#			echo -e "\rRunning Default in (${tlimit}) s: \c"
+#			read -t 1 reconCommand
+#			[ ! -z "$reconCommand" ] && { break ;  }
+#			count=$((count+1))
+#		done
+#		if [ "$reconCommand" == "All" ] || [ -z `echo "${reconCommand}"` ]; then
+#			runRecon $1 "All"
+#			reconCommand="!"
+#		elif [[ "$reconCommand" =~ ^($(echo "${availableRecon}" | tr ", " "|"))$ ]]; then
+#			runRecon $1 $reconCommand
+#			reconCommand="!"
+#		elif [ "$reconCommand" == "Skip" ] || [ "$reconCommand" == "!" ]; then
+#			reconCommand="!"
+#			echo -e ""
+#			echo -e ""
+#			echo -e ""
+#		else
+#			echo -e "${NC}"
+#			echo -e "${RED}Incorrect choice!"
+#			echo -e "${NC}"
+#		fi
+#	done
+	runRecon $1 "All"
+	reconCommand="!"
 fi
 
 }
@@ -346,10 +348,12 @@ for line in $file; do
 		if [[ ! -z `echo "${line}" | grep ssl/http` ]]; then
 			#echo "sslyze --regular $1 | tee recon/sslyze_$1_$port.txt"
 			echo "sslscan $1 | tee recon/sslscan_$1_$port.txt"
-			echo "gobuster dir -w /usr/share/wordlists/dirb/common.txt -l -t 30 -e -k -x $pages -u https://$1:$port -o recon/gobuster_$1_$port.txt"
+			#echo "gobuster dir -w /usr/share/wordlists/dirb/common.txt -l -t 30 -e -k -x $pages -u https://$1:$port -o recon/gobuster_$1_$port.txt"
+			echo "gobuster -u https://$1:$port -o recon/gobuster_$1_$port.txt -w /usr/share/wordlists/dirb/common.txt -l -t 30 -e -k -x dir"
 			echo "nikto -host https://$1:$port -ssl | tee recon/nikto_$1_$port.txt"
 		else
-			echo "gobuster dir -w /usr/share/wordlists/dirb/common.txt -l -t 30 -e -k -x $pages -u http://$1:$port -o recon/gobuster_$1_$port.txt"
+			#echo "gobuster dir -w /usr/share/wordlists/dirb/common.txt -l -t 30 -e -k -x $pages -u http://$1:$port -o recon/gobuster_$1_$port.txt"
+			echo "gobuster -u http://$1:$port -o recon/gobuster_$1_$port.txt -w /usr/share/wordlists/dirb/common.txt -l -t 30 -e -k -x dir"
 			echo "nikto -host $1:$port | tee recon/nikto_$1_$port.txt"
 		fi
 		echo ""
@@ -453,20 +457,21 @@ if [ "$2" == "All" ]; then
 else
 	reconCommands=`cat nmap/Recon_$1.nmap | grep $1 | grep $2`
 fi
-
+echo "${reconCommands}"
 for line in `echo "${reconCommands}"`; do
+	echo "${line}"
 	currentScan=`echo $line | cut -d " " -f 1 | sed 's/.\///g; s/.py//g; s/cd/odat/g;' | sort -u | tr "\n" "," | sed 's/,/,\ /g' | head -c-2`
 	fileName=`echo "${line}" | awk -F "recon/" '{print $2}' | head -c-1`
-	if [ ! -z recon/`echo "${fileName}"` ] && [ ! -f recon/`echo "${fileName}"` ]; then
-		echo -e "${NC}"
-		echo -e "${YELLOW}Starting $currentScan scan"
-		echo -e "${NC}"
-		echo $line | /bin/bash
-		echo -e "${NC}"
-		echo -e "${YELLOW}Finished $currentScan scan"
-		echo -e "${NC}"
-		echo -e "${YELLOW}========================="
-	fi
+	#if [ ! -z recon/`echo "${fileName}"` ] && [ ! -f recon/`echo "${fileName}"` ]; then
+	echo -e "${NC}"
+	echo -e "${YELLOW}Starting $currentScan scan"
+	echo -e "${NC}"
+	echo $line | /bin/bash
+	echo -e "${NC}"
+	echo -e "${YELLOW}Finished $currentScan scan"
+	echo -e "${NC}"
+	echo -e "${YELLOW}========================="
+	#fi
 done
 
 IFS=$oldIFS
