@@ -1,4 +1,3 @@
-
 import time
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
@@ -6,6 +5,7 @@ import os
 import re
 from pathlib import Path
 import subprocess
+import omap
 
 def process_new_line():
     if not os.path.isfile('/usr/local/zeek/logs/current/dhcp.log'):
@@ -18,34 +18,16 @@ def process_new_line():
     dir = '/var/www/html/' + id
     p = Path(dir)
     p.mkdir(mode=0o755, parents=True, exist_ok=True)
-    run_tests(id)
+    run_tests(dir, id)
 
-def run_tests(id):
+def run_tests(dir, id):
     ip = id.split('_')[0]
     print("A device [ " + id + " ] just made a DHCP request.")
     txt = input("Would you like to run tests on this device? (y/n)")
     if txt != 'Y' and txt != 'y':
         print("Not running tests")
         return
-    dir = '/var/www/html/' + id + '/nmap'
-    p = Path(dir)
-    p.mkdir(mode=0o755, parents=True, exist_ok=True)
-    #scans = ['Quick', 'Basic', 'Vulns', 'Recon']
-    scans = ['Recon']
-    for scan in scans:
-        dir = '/var/www/html/' + id + '/nmap/' + scan
-        cmd = ['sudo', 'nmapTests.sh', ip, scan]
-        print("Running " + ' '.join(cmd))
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-        f = open(dir, "w+")
-        for line in p.stdout:
-            line=line.decode('ascii')
-            print(line)
-            f.write(line)
-        p.wait()
-        f.close()
-    # note that nmapTests.sh will spit some files out in the cwd
-    # could clear them up here if necessary ..
+    omap.runAllTests(dir,ip)
 
 if __name__ == "__main__":
     os.chdir('/usr/local/zeek/logs/current')
@@ -54,8 +36,10 @@ if __name__ == "__main__":
     ignore_directories = False
     case_sensitive = True
     my_event_handler = PatternMatchingEventHandler(patterns, ignore_patterns, ignore_directories, case_sensitive)
-    # test 
-    run_tests("192.168.4.1_00:ec:0a:ca:e9:ea/")
+    # for testing - run against router immediately (router has some open ports)
+    dir = "/var/www/html/192.168.4.1_00:ec:0a:ca:e9:ea"
+    id = "192.168.4.1_00:ec:0a:ca:e9:ea"
+    run_tests(dir,id)
 
 def on_created(event):
     print("%s has been created!" %(event.src_path))
