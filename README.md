@@ -52,11 +52,10 @@ Make symbolic link so nmapTests.sh can be run anywhere
 Add execute permission to nmapTests.sh
 `chmod +x nmapTests.sh`
 
-#### gobuster
-`sudo apt-get install gobuster`
-Move common.txt to /usr/share/wordlists/dirb/common.txt
-`cp common.txt /usr/share/wordlists/dirb/common.txt`
-`cp directory-list-2.3-medium.txt /usr/share/wordlists/dirb/directory-list-2.3-medium.txt`
+#### wfuzz
+`pip3 install wfuzz`
+Move common.txt to and directory-list-2.3-medium.txt /usr/share/wordlists/dirb/
+Move extensions.txt to /usr/share/wordlists/dirb/extensions.txt
 
 #### nikto
 `sudo apt-get install nikto`
