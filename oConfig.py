@@ -4,3 +4,4 @@ nmapCmd = ['sudo', 'nmap', '-Pn']
 retries = '2'
 tcpScanType = '-sS'
 timing = '-T5'
+includeFiltered = False
