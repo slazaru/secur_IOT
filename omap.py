@@ -21,6 +21,7 @@ def runAllTests(dir, ip):
     #nmapBasicScan(dir, ip, 1, 1000, 'udp')
     nmapDepthScan(dir, ip, 1, 1000, 'tcp')
     nmapDepthScan(dir, ip, 1, 1000, 'udp')
+    print("\nAll tests finished!\n")
 
 # given a file containing nmap output, extracts the port/protocol
 # returns a list of port:protocol pairs
@@ -43,7 +44,6 @@ def extractAll(file):
     f = open(file, "r")
     lines = []
     for line in f:
-        print(line)
         if "open" in line:
             if "filtered" in line and not cfg.includeFiltered:
                 continue
@@ -144,19 +144,134 @@ def nmapDepthScan(dir, ip, lo, hi, service):
     if not os.path.exists(prevf):
         # havent performed a basic scan yet, do this before continuing
         nmapBasicScan(dir, ip, lo, hi, service)
-    outf = dir + "/" + service + "_" + str(lo) + "-" + str(hi) + "_depth"
-    resetFile(outf)
-    f = open(outf, "w")
+    if not os.path.exists(prevf):
+        # wasn't able to extract any ports
+        return
     lines = extractAll(prevf)
     for line in lines:
         if "http" in line:
-            fuzz(dir, ip, line, "common.txt", False, False, False)
-    f.close()
+            #fuzz(dir, ip, line, "common.txt", False, False, False)
+            nikto(dir, ip,line, False)
+        if "https" in line:
+            #fuzz(dir, ip, line, "common.txt", True, False, False)
+            sslscan(dir, ip, line)
+            nikto(dir, ip, line, True)
+        if "Joomla" in line:
+            joomscan(dir, ip, line)
+        if "WordPress" in line:
+            wpscan(dir, ip, line)
+        if "Drupal" in line:
+            droopescan(dir, ip, line)
+
+def nikto(dir, ip, line, https=False):
+    info = line.split(" ")
+    port = info[0].split("/")[0]
+    cmd = []
+    cmd.append("nikto")
+    cmd.append("-host")
+    target = ""
+    if https:
+        target += "https://"
+    else:
+        target += "http://"
+    target += ip + ":" + port
+    cmd.append(target)
+    print("Running " + ' '.join(cmd))
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+    p.wait()
+    outfname = dir + "/" + "nikto_" + port + "_"
+    if https:
+        outfname += "https"
+    else:
+        outfname += "http"
+    outf = open(outfname, "w")
+    for line in p.stdout:
+        line=line.decode('ascii')
+        print(line, flush=True)
+        outf.write(line)
+    outf.close()
+
+def joomscan(dir, ip, line):
+    info = line.split(" ")
+    port = info[0].split("/")[0]
+    cmd = []
+    cmd.append("joomscan.pl")
+    cmd.append("--url")
+    target = ""
+    target += ip + ":" + port
+    cmd.append(target)
+    print("Running " + ' '.join(cmd))
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+    p.wait()
+    outfname = dir + "/" + "joomscan_" + port + "_"
+    outf = open(outfname, "w")
+    for line in p.stdout:
+        line=line.decode('ascii')
+        print(line, flush=True)
+        outf.write(line)
+
+def wpscan(dir, ip, line):
+    info = line.split(" ")
+    port = info[0].split("/")[0]
+    cmd = []
+    cmd.append("wpscan")
+    cmd.append("--url")
+    target = ""
+    target += ip + ":" + port
+    cmd.append(target)
+    cmd.append("--enumerate")
+    cmd.append("-p")
+    print("Running " + ' '.join(cmd))
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+    p.wait()
+    outfname = dir + "/" + "wordpress_" + port + "_"
+    outf = open(outfname, "w")
+    for line in p.stdout:
+        line=line.decode('ascii')
+        print(line, flush=True)
+        outf.write(line)
+
+def droopescan(dir, ip, line):
+    info = line.split(" ")
+    port = info[0].split("/")[0]
+    cmd = []
+    cmd.append("droopescan")
+    cmd.append("scan")
+    cmd.append("drupal")
+    cmd.append("-u")
+    target = ""
+    target += ip + ":" + port
+    cmd.append(target)
+    print("Running " + ' '.join(cmd))
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+    p.wait()
+    outfname = dir + "/" + "droopescan_" + port + "_"
+    outf = open(outfname, "w")
+    for line in p.stdout:
+        line=line.decode('ascii')
+        print(line, flush=True)
+        outf.write(line)
+
+def sslscan(dir, ip, line):
+    info = line.split(" ")
+    port = info[0].split("/")[0]
+    cmd = []
+    cmd.append("sslscan")
+    target = ip + ":" + port
+    cmd.append(target)
+    print("Running " + ' '.join(cmd))
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+    p.wait()
+    outf = open(dir + "/" + "sslscan_" + port, "w")
+    for line in p.stdout:
+        line=line.decode('ascii').strip()
+        print(line, flush=True)
+        outf.write(line)
+    outf.close()
 
 def fuzz(dir, ip, line, wordlist, https=False, useExtensions=False, recursive=False):
     info = line.split(" ")
     port = info[0].split("/")[0]
-    print("fuzz got port " + port)
     cmd = []
     cmd.append("wfuzz")
     cmd.append("-w")
@@ -181,12 +296,20 @@ def fuzz(dir, ip, line, wordlist, https=False, useExtensions=False, recursive=Fa
     if useExtensions == True:
         target += "FUZ2Z"
     cmd.append(target)
-    #cmd.append(">")
-    #cmd.append(dir + "/" + port + "_fuzz_common" + "." + cfg.outputFormat)
     print("Running " + ' '.join(cmd))
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     p.wait()
-    outf = open(dir + "/" + port + "_" + wordlist + "." + cfg.outputFormat, "w")
+    outfname = dir + "/" + "wfuzz_" + port + "_"
+    if https == True:
+        outfname += "https_"
+    else:
+        outfname += "http_"
+    if recursive:
+        outfname += "recursive_"
+    if useExtensions:
+        outfname += "extensions_"
+    outfname += wordlist + "." + cfg.outputFormat
+    outf = open(outfname, "w")
     for line in p.stdout:
         line=line.decode('ascii').strip()
         print(line, flush=True)
