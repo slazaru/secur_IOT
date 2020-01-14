@@ -1,27 +1,105 @@
-# omni map
-
-# configuration
-import oConfig as cfg
-
 import os
 import re
 from pathlib import Path
 import subprocess
+# config file
+import oConfig as cfg
 
-def runAllTests(dir, ip):
-    udpPortFile = dir + "/udp_ports"
-    tcpPortFile = dir + "/tcp_ports"
-    allPortFile = dir + "/allPorts"
-    resetFile(udpPortFile)
-    resetFile(tcpPortFile)
-    resetFile(allPortFile)
+dir = ""
+ip = ""
+TTLOS = "Unknown"
+nmapOS = "Unknown"
+udpPortFile = ""
+tcpPortFile = ""
+allPortFile = ""
+
+def runAllTests(directory, ipaddr):
+    global dir
+    global ip
+    dir = directory
+    ip = ipaddr
+    global udpPortFile
+    udpPortFile = dir + cfg.udpPortFile
+    global tcpPortFile
+    tcpPortFile = dir + cfg.tcpPortFile
+    global allPortFile
+    allPortFile = dir + cfg.allPortFile
     #nmapQuickScan(dir, ip, 1, 1000, 'tcp')
     #nmapQuickScan(dir, ip, 1, 1000, 'udp')
     #nmapBasicScan(dir, ip, 1, 1000, 'tcp')
     #nmapBasicScan(dir, ip, 1, 1000, 'udp')
     nmapDepthScan(dir, ip, 1, 1000, 'tcp')
     nmapDepthScan(dir, ip, 1, 1000, 'udp')
+    getOSFromTTL(dir, ip)
+    getOSFromNmap()
     print("\nAll tests finished!\n")
+
+def getOSFromTTL(dir, ip):
+    global TTLOS
+    cmd = []
+    cmd.append("ping")
+    cmd.append("-c")
+    cmd.append("1")
+    cmd.append("-w")
+    cmd.append("5")
+    cmd.append(ip)
+    print("Running " + ' '.join(cmd))
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+    p.wait()
+    outf = open(dir + cfg.pingFile, "w")
+    for line in p.stdout:
+        line=line.decode('ascii')
+        outf.write(line)
+        line = line.strip()
+        print(line, flush=True)
+        if "ttl=" in line:
+            res = line.split(" ")
+            res = res[5][4:]
+            print("ttl is " + res)
+            ttl = int(res)
+            if ttl == 64:
+                TTLOS = "Linux"
+            elif ttl == 128:
+                TLLOS = "Windows"
+            elif ttl == 254:
+                TTLOS = "Solaris"
+    if TTLOS == "Unknown":
+        print("Couldn't determine the OS from ping ttl")
+        outf.write("\nCouldn't determine the OS from ping ttl")
+    else:
+        print("ttl from ping suggests the OS is " + TTLOS)
+        outf.write("\nttl from ping suggests the OS is " + TTLOS)
+    outf.close()
+
+def getOSFromNmap():
+    cmd = []
+    for el in cfg.nmapCmd:
+        cmd.append(el)
+    cmd.append("-O")
+    cmd.append(ip)
+    print("Running " + ' '.join(cmd))
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+    p.wait()
+    global nmapOS
+    outf = open(dir + cfg.nmapOSFile, "w")
+    for line in p.stdout:
+        line=line.decode('ascii')
+        outf.write(line)
+        print(line.strip(), flush=True)
+        res = re.search("linux", line, re.IGNORECASE)
+        if res is not None:
+            print("got linux")
+            nmapOS = "Linux"
+        res = re.search("windows", line, re.IGNORECASE)
+        if res is not None:
+            nmapOS = "Windows"
+    if nmapOS == "Unknown":
+        print("Could not determine the OS from nmap -O")
+        outf.write("\nCould not determine the OS from nmap -O")
+    else:
+        print("nmap -O suggests the OS is " + nmapOS)
+        outf.write("\nnmap -O suggests the OS is " + nmapOS)
+    outf.close()
 
 # given a file containing nmap output, extracts the port/protocol
 # returns a list of port:protocol pairs
@@ -82,12 +160,12 @@ def nmapQuickScan(dir, ip, lo, hi, service):
         return
     # write results if open ports found
     if service == 'udp':
-        print("Writing open ports to " + dir + "/udp_ports")
-        pfile = open(dir + "/udp_ports", "a")
+        print("Writing open ports to " + udpPortFile)
+        pfile = open(udpPortFile, "a")
     else:
-        print("Writing open ports to " + dir + "/tcp_ports")
-        pfile = open(dir + "/tcp_ports", "a")
-    tfile = open(dir + "/allPorts", "a")
+        print("Writing open ports to " + tcpPortFile)
+        pfile = open(tcpPortFile, "a")
+    tfile = open(allPortFile, "a")
     for port in ports:
         pfile.write(port + "\n")
         tfile.write(port + "\n")
@@ -151,17 +229,28 @@ def nmapDepthScan(dir, ip, lo, hi, service):
     for line in lines:
         if "http" in line:
             #fuzz(dir, ip, line, "common.txt", False, False, False)
-            nikto(dir, ip,line, False)
+            #nikto(dir, ip,line, False)
+            pass
         if "https" in line:
             #fuzz(dir, ip, line, "common.txt", True, False, False)
-            sslscan(dir, ip, line)
-            nikto(dir, ip, line, True)
+            #sslscan(dir, ip, line)
+            #nikto(dir, ip, line, True)
+            pass
         if "Joomla" in line:
             joomscan(dir, ip, line)
         if "WordPress" in line:
             wpscan(dir, ip, line)
         if "Drupal" in line:
             droopescan(dir, ip, line)
+        res = re.search("ssh", line, re.IGNORECASE)
+        if res is not None:
+            sshBrute(cfg.sshUsers1, cfg.sshPasswords1, line)
+
+def sshBrute(userfile, passfile, line):
+    info = line.split(" ")
+    port = info[0].split("/")[0]
+    print("ssh service detected on port " + port)
+    pass
 
 def nikto(dir, ip, line, https=False):
     info = line.split(" ")
