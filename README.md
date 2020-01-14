@@ -45,23 +45,38 @@ Find where the nmap scripts live `find / -name "*.nse" 2>/dev/null`
 
 Add https://github.com/vulnersCom/nmap-vulners/blob/master/vulners.nse to the scripts dir above (there's a copy in this repo), or
 `wget https://raw.githubusercontent.com/vulnersCom/nmap-vulners/master/http-vulners-regex.nse -O /usr/share/nmap/scripts/vulners.nse`
-
-Make symbolic link so nmapTests.sh can be run anywhere
 `sudo ln -s /home/pi/secur_IOT/nmapTests.sh /usr/local/bin/`
-
-Add execute permission to nmapTests.sh
-`chmod +x nmapTests.sh`
-
 #### wfuzz
 `pip3 install wfuzz`
 Move common.txt to and directory-list-2.3-medium.txt /usr/share/wordlists/dirb/
 Move extensions.txt to /usr/share/wordlists/dirb/extensions.txt
+
+#### sslscan
+`sudo apt-get install sslscan`
+To enable old openssl protocols (dangerous) https://gist.github.com/bmaupin/8caca3a1e8c3c5686141
 
 #### nikto
 `sudo apt-get install nikto`
 
 #### sslscan
 `sudo apt-get install sslscan`
+
+#### joomscan
+`git clone https://github.com/rezasp/joomscan.git`
+`cd joomscan`
+`apt-get install libwww-perl`
+Allow to be run anywhere: 
+`sudo ln -s /home/pi/opt/joomscan/joomscan.pl /usr/local/bin/`
+Get rid of /usr/bin/perl^M: bad interpreter: change shebang (the first line) in joomscan.pl to #!/usr/bin/perl --
+
+#### wpscan
+`sudo apt-get install gem`
+`sudo apt-get install rubygems`
+`sudo apt-get install ruby-dev`
+`gem install wpscan`
+
+#### droopescan
+`pip3 install droopescan`
 
 #### dnsrecon
 https://github.com/darkoperator/dnsrecon/wiki/Installation-Instructions
