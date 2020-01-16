@@ -78,6 +78,12 @@ Get rid of /usr/bin/perl^M: bad interpreter: change shebang (the first line) in 
 #### droopescan
 `pip3 install droopescan`
 
+#### enum4linux
+`git clone https://github.com/portcullislabs/enum4linux.git`
+
+#### hydra
+`sudo apt-get install hydra`
+
 #### dnsrecon
 https://github.com/darkoperator/dnsrecon/wiki/Installation-Instructions
 `pip install netaddr`
