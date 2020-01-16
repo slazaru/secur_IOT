@@ -7,19 +7,6 @@ from pathlib import Path
 import subprocess
 import omap
 
-def process_new_line():
-    if not os.path.isfile('/usr/local/zeek/logs/current/dhcp.log'):
-        return
-    f = open('/usr/local/zeek/logs/current/dhcp.log', 'r')
-    lines = f.readlines()
-    new_line = lines[-1]
-    vals = re.split(r'\t+', new_line)
-    id = vals[2] + "_" + vals[4]
-    dir = '/var/www/html/' + id
-    p = Path(dir)
-    p.mkdir(mode=0o755, parents=True, exist_ok=True)
-    run_tests(dir, id)
-
 def run_tests(dir, id):
     ip = id.split('_')[0]
     print("A device [ " + id + " ] just made a DHCP request.")
@@ -36,10 +23,27 @@ if __name__ == "__main__":
     ignore_directories = False
     case_sensitive = True
     my_event_handler = PatternMatchingEventHandler(patterns, ignore_patterns, ignore_directories, case_sensitive)
-    # for testing - run against router immediately (router has some open ports)
+    # for testing vvv
     dir = "/var/www/html/192.168.4.1_00:ec:0a:ca:e9:ea"
     id = "192.168.4.1_00:ec:0a:ca:e9:ea"
+    p = Path(dir)
+    p.mkdir(mode=0o755, parents=True, exist_ok=True)
     run_tests(dir,id)
+    exit()
+    # testing ^^^
+
+def process_new_line():
+    if not os.path.isfile('/usr/local/zeek/logs/current/dhcp.log'):
+        return
+    f = open('/usr/local/zeek/logs/current/dhcp.log', 'r')
+    lines = f.readlines()
+    new_line = lines[-1]
+    vals = re.split(r'\t+', new_line)
+    id = vals[2] + "_" + vals[4]
+    dir = '/var/www/html/' + id
+    p = Path(dir)
+    p.mkdir(mode=0o755, parents=True, exist_ok=True)
+    run_tests(dir, id)
 
 def on_created(event):
     print("%s has been created!" %(event.src_path))

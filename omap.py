@@ -2,6 +2,7 @@ import os
 import re
 from pathlib import Path
 import subprocess
+from ftplib import FTP
 # config file
 import oConfig as cfg
 
@@ -30,8 +31,8 @@ def runAllTests(directory, ipaddr):
     #nmapBasicScan(dir, ip, 1, 1000, 'udp')
     nmapDepthScan(dir, ip, 1, 1000, 'tcp')
     nmapDepthScan(dir, ip, 1, 1000, 'udp')
-    getOSFromTTL(dir, ip)
-    getOSFromNmap()
+    #getOSFromTTL(dir, ip)
+    #getOSFromNmap()
     print("\nAll tests finished!\n")
 
 def getOSFromTTL(dir, ip):
@@ -46,7 +47,7 @@ def getOSFromTTL(dir, ip):
     print("Running " + ' '.join(cmd))
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     p.wait()
-    outf = open(dir + cfg.pingFile, "w")
+    outf = open(dir + cfg.pingOSFile, "w")
     for line in p.stdout:
         line=line.decode('ascii')
         outf.write(line)
@@ -143,6 +144,9 @@ def nmapQuickScan(dir, ip, lo, hi, service):
         cmd.append(cfg.tcpScanType)
     cmd.append("--max-retries")
     cmd.append(cfg.retries)
+    if cfg.maxRTT is not None:
+        cmd.append("--max-rtt-timeout")
+        cmd.append(cfg.maxRTT)
     cmd.append(cfg.timing)
     cmd.append("-p")
     cmd.append(str(lo) + "-" + str(hi))
@@ -205,6 +209,9 @@ def nmapBasicScan(dir, ip, lo, hi, service):
     cmd.append(portarg)
     cmd.append("--max-retries")
     cmd.append(cfg.retries)
+    if cfg.maxRTT is not None:
+        cmd.append("--max-rtt-timeout")
+        cmd.append(cfg.maxRTT)
     cmd.append(cfg.timing)
     cmd.append('-oN')
     cmd.append(outf)
@@ -227,14 +234,14 @@ def nmapDepthScan(dir, ip, lo, hi, service):
         return
     lines = extractAll(prevf)
     for line in lines:
-        if "http" in line:
-            #fuzz(dir, ip, line, "common.txt", False, False, False)
-            #nikto(dir, ip,line, False)
-            pass
         if "https" in line:
-            #fuzz(dir, ip, line, "common.txt", True, False, False)
+            #wfuzz(dir, ip, line, cfg.wfuzzWordlist1, cfg.wfuzzExtensions1, False, False, False)
             #sslscan(dir, ip, line)
             #nikto(dir, ip, line, True)
+            pass
+        elif "http" in line:
+            #wfuzz(dir, ip, line, cfg.wfuzzWordlist1, cfg.wfuzzExtensions1, False, False, False)
+            #nikto(dir, ip,line, False)
             pass
         if "Joomla" in line:
             joomscan(dir, ip, line)
@@ -242,15 +249,45 @@ def nmapDepthScan(dir, ip, lo, hi, service):
             wpscan(dir, ip, line)
         if "Drupal" in line:
             droopescan(dir, ip, line)
-        res = re.search("ssh", line, re.IGNORECASE)
-        if res is not None:
-            sshBrute(cfg.sshUsers1, cfg.sshPasswords1, line)
+        if re.search("ssh", line, re.IGNORECASE) is not None:
+            hydra(cfg.sshUsers1, cfg.sshPasswords1, line, "ssh")
+        if re.search("ftps", line, re.IGNORECASE) is not None:
+            hydra(cfg.sshUsers1, cfg.sshPasswords1, line, "ftps")
+        elif re.search("ftp", line, re.IGNORECASE) is not None:
+            hydra(cfg.sshUsers1, cfg.sshPasswords1, line, "ftp")
 
-def sshBrute(userfile, passfile, line):
+def hydra(userfile, passfile, line, protocol):
     info = line.split(" ")
     port = info[0].split("/")[0]
-    print("ssh service detected on port " + port)
-    pass
+    print(protocol + " service detected on port " + port)
+    cmd = []
+    cmd.append("hydra")
+    cmd.append("-L")
+    cmd.append(userfile)
+    cmd.append("-P")
+    cmd.append(passfile)
+    cmd.append("-t")
+    cmd.append(str(cfg.hydrasshTasks))
+    target = protocol
+    target += "://"
+    target += ip
+    cmd.append(target)
+    userbase = os.path.basename(userfile)
+    passbase = os.path.basename(passfile)
+    outfname = dir + "/" + "hydra_" + port + "_" + protocol + "_" + userbase + "_" + passbase
+    print("Running " + ' '.join(cmd))
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p.wait()
+    outf = open(outfname, "w")
+    for line in p.stdout:
+        line=line.decode('ascii')
+        print(line, flush=True)
+        outf.write(line)
+    for line in p.stderr:
+        line=line.decode('ascii')
+        print(line, flush=True)
+        outf.write(line)
+    outf.close()
 
 def nikto(dir, ip, line, https=False):
     info = line.split(" ")
@@ -358,16 +395,16 @@ def sslscan(dir, ip, line):
         outf.write(line)
     outf.close()
 
-def fuzz(dir, ip, line, wordlist, https=False, useExtensions=False, recursive=False):
+def wfuzz(dir, ip, line, wordlist, extensions, https=False, useExtensions=False, recursive=False):
     info = line.split(" ")
     port = info[0].split("/")[0]
     cmd = []
     cmd.append("wfuzz")
     cmd.append("-w")
-    cmd.append(cfg.wordlistLocation + wordlist)
+    cmd.append(wordlist)
     if useExtensions == True:
         cmd.append("-w")
-        cmd.append(cfg.fileExtensionLocation)
+        cmd.append(extensions)
     cmd.append("--hc")
     cmd.append("404")
     if recursive == True:

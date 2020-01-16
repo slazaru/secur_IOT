@@ -1,39 +1,36 @@
-# source: https://github.com/fubar2/SecurIOT/blob/master/pcap/makeclouds.py
+# takes a pcap file and produces interesting reports
+# usage : python3 makeclouds.py [pcap file] [output directory]
+# forked from: https://github.com/fubar2/SecurIOT/blob/master/pcap/makeclouds.py
 from scapy.all import *
 from wordcloud import WordCloud
 from collections import Counter
 import matplotlib
 from matplotlib import cm
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap
-
 matplotlib.use('Agg') # matplotlib 'headless' error bandaid
 import matplotlib.pyplot as plt
 import socket
 import os
 from random import randint
-
-# slazaru changes
 from pathlib import Path
 import argparse
 
-# geoip stuff
-# ross@nuc:~/rossgit/PcapViz$ python3
+# TODO: move to readme
+# setting up geoip
+# needs 'GeoLite2-City.mmdb' from https://dev.maxmind.com/geoip/geoip2/geolite2/
+# pip3 install scapy
+# pip3 install wordcloud
+# pip3 install numpy
+# pip3 install matplotlib==3.0.3
+# pip3 install networkx
+# then check if it works
 # Python 3.7.5 (default, Nov  7 2019, 10:50:52)
 # [GCC 8.3.0] on linux
 # Type "help", "copyright", "credits" or "license" for more information.
 # >>> import maxminddb
 # >>> reader = maxminddb.open_database('/usr/share/GeoIP/GeoLite2-City.mmdb')
 # >>> reader.get('137.59.252.179')
-# {'city': {'geoname_id': 2147714, 'names': {'de': 'Sydney', 'en': 'Sydney', 'es': 'Sídney', 'fr': 'Sydney', 'ja': 'シドニー', 'pt-BR': 'Sydney', 'ru': 'Сидней', 'zh-CN': '悉尼'}},
-# 'continent': {'code': 'OC', 'geoname_id': 6255151, 
-# 'names': {'de': 'Ozeanien', 'en': 'Oceania', 'es': 'Oceanía', 'fr': 'Océanie', 'ja': 'オセアニア', 'pt-BR': 'Oceania', 'ru': 'Океания', 'zh-CN': '大洋洲'}}, 
-# 'country': {'geoname_id': 2077456, 'iso_code': 'AU', 'names': {'de': 'Australien', 'en': 'Australia',
-# 'es': 'Australia', 'fr': 'Australie', 'ja': 'オーストラリア', 'pt-BR': 'Austrália', 'ru': 'Австралия', 'zh-CN': '澳大利亚'}},
-# 'location': {'accuracy_radius': 500, 'latitude': -33.8591, 'longitude': 151.2002, 'time_zone': 'Australia/Sydney'}, 'postal': {'code': '2000'}, 
-# 'registered_country': {'geoname_id': 1861060, 'iso_code': 'JP', 'names': {'de': 'Japan', 'en': 'Japan', 'es': 'Japón', 'fr': 'Japon', 'ja': '日本', 'pt-BR': 'Japão', 'ru': 'Япония', 'zh-CN': '日本'}}, 
-# 'subdivisions': [{'geoname_id': 2155400, 'iso_code': 'NSW', 'names': {'en': 'New South Wales', 'fr': 'Nouvelle-Galles du Sud', 'pt-BR': 'Nova Gales do Sul', 
-# 'ru': 'Новый Южный Уэльс'}}]}
-# >>> 
+# (hope for no error)
 
 # parse a pcap file and produce wordclouds for each IP destination packets
 # for stats also can use tshark on pcap - eg:
@@ -106,6 +103,10 @@ def lookup(sauce,sourcen,deens):
 		newsauce[kname] = sauce[k]
 	return (newsauce,newsaucen)
 
+# build up a set of all seen ip addresses from pcap
+# build up a set of all seen ports from pcap
+# build up a dictionary of seen port -> counts from pcap
+# build up a dictionary of seen ip -> counts from pcap
 def readPcap(infile,seenIP,seenPORT):
 	"""single pass version """
 	allIP = set()
@@ -113,13 +114,13 @@ def readPcap(infile,seenIP,seenPORT):
 	for i,proto in enumerate(pobj):
 			pn = pnames[i]
 			seenIP[pn] = {}
-	for pkt in PcapReader(infile):
+	for pkt in PcapReader(infile): # Pcapreader is scapy class
 		for i,proto in enumerate(pobj):
 			pn = pnames[i]
 			if proto in pkt:
 				nsauce,ndest,sport,dport = getsrcdest(pkt,proto)
 				bingo = False
-				ipport = '%s_%s' % (nsauce,sport)
+				ipport = '%s_%s' % (nsauce,sport) # srcip_srcport
 				if seenPORT.get(ipport,None) == None:
 					c = Counter()
 					seenPORT[ipport] = c
@@ -143,11 +144,11 @@ def readPcap(infile,seenIP,seenPORT):
 					continue
 	return(seenIP,seenPORT,allIP,allPORT)
 
-		  
+
 def processPcap(seenIP,seenPORT,deens):
 	pics = []
 	for i,proto in enumerate(pobj):
-		pn = pnames[i]
+		pn = pnames[i] #protocolname
 		for nsauce in seenIP[pn].keys():
 			k = seenIP[pn][nsauce].keys()
 			kl = len(k)
@@ -382,7 +383,7 @@ if __name__=="__main__":
 	seenIP,seenPORT,allIP,allPORT = readPcap(infname,{},{})
 	deens,pics = processPcap(seenIP,seenPORT,{})
 	writeIndex(pics)
-	doTshark()
+	#doTshark()
 	if doGraphs:
 		viridis = cm.get_cmap('viridis', 12)
 		f = plt.figure(figsize=(10, 10))
