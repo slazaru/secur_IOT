@@ -22,6 +22,9 @@ For the setup instructions I'll assume you're using a RPI 2/3/4, but any Debian-
 
 `sudo apt-get install python3-pip`
 
+#### For monitor.py
+`pip3 install watchdog`
+
 #### For wordclouds.py
 `sudo apt-get install libatlas-base-dev`
 
@@ -50,6 +53,13 @@ Add https://github.com/vulnersCom/nmap-vulners/blob/master/vulners.nse to the sc
 `pip3 install wfuzz`
 Move common.txt to and directory-list-2.3-medium.txt /usr/share/wordlists/dirb/
 Move extensions.txt to /usr/share/wordlists/dirb/extensions.txt
+
+#### smbmap
+Follow instructions https://github.com/ShawnDEvans/smbmap
+Will probably need to add a symlink in a $PATH dir
+
+#### smbclient
+`sudo apt-get install smbclient`
 
 #### sslscan
 `sudo apt-get install sslscan`
@@ -80,6 +90,7 @@ Get rid of /usr/bin/perl^M: bad interpreter: change shebang (the first line) in 
 
 #### enum4linux
 `git clone https://github.com/portcullislabs/enum4linux.git`
+Will need to add symlink to $PAT
 
 #### hydra
 `sudo apt-get install hydra`
