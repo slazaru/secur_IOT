@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 
 # nmap
-nmapCmd = ['sudo', 'nmap', '-Pn']
+nmapCmd = ['nmap', '-Pn']
 retries = '2'
 tcpScanType = '-sS'
 timing = '-T5'
 includeFiltered = False
 nmapOSFile = "/OS_from_nmap"
-maxRTT = "100ms"
+maxRTT = "1000ms"
+minRate = "1000"
 
 # wfuzz
 wfuzzExtensions1 = "/usr/share/wordlists/dirb/extensions.txt"

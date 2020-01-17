@@ -30,11 +30,13 @@ def runAllTests(directory, ipaddr):
     #nmapQuickScan(dir, ip, 1, 1000, 'udp')
     #nmapBasicScan(dir, ip, 1, 1000, 'tcp')
     #nmapBasicScan(dir, ip, 1, 1000, 'udp')
-    nmapDepthScan(dir, ip, 1, 1000, 'tcp')
-    #nmapDepthScan(dir, ip, 1, 1000, 'udp')
     #getOSFromTTL(dir, ip)
     #getOSFromNmap()
-    #OSspecific()
+    #nmapDepthScan(dir, ip, 1, 1000, 'tcp')
+    #snmpcheck()
+    #snmpwalk()
+    dnsrecon("10.10.10.0", "24")
+    #nmapDepthScan(dir, ip, 1, 1000, 'udp')
     print("\nAll tests finished!\n")
 
 def getOSFromTTL(dir, ip):
@@ -146,9 +148,10 @@ def nmapQuickScan(dir, ip, lo, hi, service):
         cmd.append(cfg.tcpScanType)
     cmd.append("--max-retries")
     cmd.append(cfg.retries)
-    if cfg.maxRTT is not None:
-        cmd.append("--max-rtt-timeout")
-        cmd.append(cfg.maxRTT)
+    cmd.append("--min-rate")
+    cmd.append(cfg.minRate)
+    cmd.append("--max-rtt-timeout")
+    cmd.append(cfg.maxRTT)
     cmd.append(cfg.timing)
     cmd.append("-p")
     cmd.append(str(lo) + "-" + str(hi))
@@ -211,9 +214,10 @@ def nmapBasicScan(dir, ip, lo, hi, service):
     cmd.append(portarg)
     cmd.append("--max-retries")
     cmd.append(cfg.retries)
-    if cfg.maxRTT is not None:
-        cmd.append("--max-rtt-timeout")
-        cmd.append(cfg.maxRTT)
+    cmd.append("--max-rtt-timeout")
+    cmd.append(cfg.maxRTT)
+    cmd.append("--min-rate")
+    cmd.append(cfg.minRate)
     cmd.append(cfg.timing)
     cmd.append('-oN')
     cmd.append(outf)
@@ -276,6 +280,67 @@ def nmapDepthScan(dir, ip, lo, hi, service):
             if enum4linuxDone == False:
                 #enum4linux()
                 enum4linuxDone = True
+        elif "161/udp" in line:
+            snmpcheck()
+            snmpwalk()
+        elif "53/tcp" in line:
+            dnsrecon("10.10.10.0", "24")
+            dnsrecon("127.0.0.1", "24")
+            dnsrecon("192.168.1.0", "24")
+            dnsrecon("192.168.0.0", "24")
+
+def dnsrecon(subnet, bits):
+    outfname = dir + "/dnsrecon_" + subnet + "_" + bits
+    cmd = []
+    cmd.append("dnsrecon")
+    cmd.append("-r")
+    cmd.append(subnet + "/" + bits)
+    cmd.append("-n")
+    cmd.append(ip)
+    print("Running " + ' '.join(cmd))
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p.wait()
+    outf = open(outfname, "w")
+    for line in p.stdout:
+        line=line.decode('ascii')
+        outf.write(line)
+        print(line, flush=True)
+    outf.close()
+    
+def snmpcheck():
+    outfname = dir + "/snmpcheck"
+    cmd = []
+    cmd.append("snmpcheck-1.8.pl")
+    cmd.append("-t")
+    cmd.append(ip)
+    print("Running " + ' '.join(cmd))
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p.wait()
+    outf = open(outfname, "w")
+    for line in p.stdout:
+        line=line.decode('ascii')
+        outf.write(line)
+        print(line, flush=True)
+    outf.close()
+    
+def snmpwalk():
+    outfname = dir + "/snmpwalk"
+    cmd = []
+    cmd.append("snmp-walk.py")
+    cmd.append("-Oa")
+    cmd.append("-c")
+    cmd.append("public")
+    cmd.append("-v")
+    cmd.append(ip)
+    print("Running " + ' '.join(cmd))
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p.wait()
+    outf = open(outfname, "w")
+    for line in p.stdout:
+        line=line.decode('ascii')
+        outf.write(line)
+        print(line, flush=True)
+    outf.close()
 
 def smbnmapVulns():
     cmd = []
