@@ -25,7 +25,10 @@ For the setup instructions I'll assume you're using a RPI 2/3/4, but any Debian-
 #### For monitor.py
 `pip3 install watchdog`
 
-#### For wordclouds.py
+#### For pcap_reporter.py
+Put location of pcapviz main.py and makeclouds.py in file
+
+#### For makeclouds.py
 `sudo apt-get install libatlas-base-dev`
 
 `sudo apt-get install libopenjp2-7`
@@ -39,6 +42,11 @@ For the setup instructions I'll assume you're using a RPI 2/3/4, but any Debian-
 `pip3 install wordcloud`
 
 `pip3 install networkx`
+
+#### pcapviz
+`git clone https://github.com/fubar2/PcapViz.git`
+Put location of main.py in pcap_reporter.py
+`pip3 install pyth
 
 #### nmap
 
