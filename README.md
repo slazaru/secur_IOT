@@ -22,6 +22,9 @@ For the setup instructions I'll assume you're using a RPI 2/3/4, but any Debian-
 
 `sudo apt-get install python3-pip`
 
+#### For monitor.py
+`pip3 install watchdog`
+
 #### For wordclouds.py
 `sudo apt-get install libatlas-base-dev`
 
@@ -46,14 +49,35 @@ Find where the nmap scripts live `find / -name "*.nse" 2>/dev/null`
 Add https://github.com/vulnersCom/nmap-vulners/blob/master/vulners.nse to the scripts dir above (there's a copy in this repo), or
 `wget https://raw.githubusercontent.com/vulnersCom/nmap-vulners/master/http-vulners-regex.nse -O /usr/share/nmap/scripts/vulners.nse`
 `sudo ln -s /home/pi/secur_IOT/nmapTests.sh /usr/local/bin/`
+
 #### wfuzz
 `pip3 install wfuzz`
 Move common.txt to and directory-list-2.3-medium.txt /usr/share/wordlists/dirb/
 Move extensions.txt to /usr/share/wordlists/dirb/extensions.txt
 
+#### smbmap
+Follow instructions https://github.com/ShawnDEvans/smbmap
+Will probably need to add a symlink in a $PATH dir
+
+#### smbclient
+`sudo apt-get install smbclient`
+
 #### sslscan
 `sudo apt-get install sslscan`
 To enable old openssl protocols (dangerous) https://gist.github.com/bmaupin/8caca3a1e8c3c5686141
+
+#### snmpcheck 
+https://github.com/pwnieexpress/pwn_plug_sources/blob/master/src/snmpcheck/snmpcheck-1.8.pl
+Add symlink to $PATH
+`chmod +x snmpcheck-1.8.pl`
+`ln -s /root/opt/snmpcheck/snmpcheck-1.8.pl /usr/local/bin`
+
+#### snmpwalk
+https://github.com/curesec/tools/blob/master/snmp/snmp-walk.py
+`pip install pysnmp`
+Add to $PATH
+`chmod +x snmp-walk.py`
+`ln -s /root/opt/snmpwalk/snmp-walk.py /usr/local/bin`
 
 #### nikto
 `sudo apt-get install nikto`
@@ -80,6 +104,7 @@ Get rid of /usr/bin/perl^M: bad interpreter: change shebang (the first line) in 
 
 #### enum4linux
 `git clone https://github.com/portcullislabs/enum4linux.git`
+Will need to add symlink to $PAT
 
 #### hydra
 `sudo apt-get install hydra`
