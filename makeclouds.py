@@ -1,6 +1,7 @@
 # takes a pcap file and produces interesting reports
 # usage : python3 makeclouds.py [pcap file] [output directory]
 # forked from: https://github.com/fubar2/SecurIOT/blob/master/pcap/makeclouds.py
+
 from scapy.all import *
 from wordcloud import WordCloud
 from collections import Counter
@@ -14,27 +15,6 @@ import os
 from random import randint
 from pathlib import Path
 import argparse
-
-# TODO: move to readme
-# setting up geoip
-# needs 'GeoLite2-City.mmdb' from https://dev.maxmind.com/geoip/geoip2/geolite2/
-# pip3 install scapy
-# pip3 install wordcloud
-# pip3 install numpy
-# pip3 install matplotlib==3.0.3
-# pip3 install networkx
-# then check if it works
-# Python 3.7.5 (default, Nov  7 2019, 10:50:52)
-# [GCC 8.3.0] on linux
-# Type "help", "copyright", "credits" or "license" for more information.
-# >>> import maxminddb
-# >>> reader = maxminddb.open_database('/usr/share/GeoIP/GeoLite2-City.mmdb')
-# >>> reader.get('137.59.252.179')
-# (hope for no error)
-
-# parse a pcap file and produce wordclouds for each IP destination packets
-# for stats also can use tshark on pcap - eg:
-# tshark -q -z hosts -z dns,tree -z bootp,stat -z conv,tcp -z conv,udp -z conv,ip -z endpoints,udp -z io,phs -r xiaofang_setupandtest.gz.pcap.gz > foo
 
 parser = argparse.ArgumentParser(description='Make word clouds from pcap files')
 parser.add_argument('pcap', help='the pcap to process')
