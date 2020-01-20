@@ -1,9 +1,20 @@
-# coordinator for makeclouds and pcapviz
+# coordinator for makeclouds and pcapgrok
 
-# location of pcapviz main.py
-pcapvizmain = "/home/pi/opt/PcapViz/main.py"
+# location of pcapgrok main.py
+pcapgrokmain = "/home/pi/opt/pcapGrok/pcapGrok.py"
 # location of makeclouds.py
 makeclouds = "/home/pi/secur_IOT/makeclouds.py"
+
+# note that the hosts file ("/etc/hosts" on debian) should contain entries
+# for the devices of interest in the testbed (eg, router, device, phone etc)
+
+# add mac addresses of devices here
+# these can be retrieved from zeek dhcp logs, or by using nmap
+router_mac = "dc:a6:32:41:12:99"
+device_under_test_mac = "00:0c:43:9d:3d:25"
+phone_mac = "00:ec:0a:ca:e9:ea"
+laptop_mac = ""
+homeassistant_mac = ""
 
 import argparse
 import os
@@ -23,8 +34,8 @@ p.mkdir(mode=0o755, parents=True, exist_ok=True)
 os.chdir(dir)
 
 # run!
-'''
 # wordclouds
+
 cmd = []
 cmd.append("python3")
 cmd.append(makeclouds)
@@ -36,20 +47,50 @@ p.wait()
 if p.stderr:
     for line in p.stderr:
         print(line.strip())
-'''
-# pcapviz
-# python main.py -i ../packet_captures/yoosee03.pcap -o yoosee03_3.pdf --layer3
+
+# pcapgrok
+
+# no whitelisting
+
 cmd = []
 cmd.append("python3")
-cmd.append(pcapvizmain)
+cmd.append(pcapgrokmain)
 cmd.append("-i")
 cmd.append(infname)
 cmd.append("-o")
-cmd.append(dir + infname + ".pdf")
-cmd.append("--layer3")
+cmd.append(dir)
+cmd.append("-p")
+cmd.append(".pdf")
+cmd.append("-d")
 print("Running " + " ".join(cmd))
 p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr = subprocess.PIPE)
 p.wait()
+for line in p.stdout:
+    print(line.decode('ascii').strip())
 if p.stderr:
     for line in p.stderr:
         print(line.strip())
+
+# with device under test whitelisting
+if device_under_test_mac != "":
+    cmd = []
+    cmd.append("python3")
+    cmd.append(pcapgrokmain)
+    cmd.append("-i")
+    cmd.append(infname)
+    cmd.append("-o")
+    cmd.append(dir)
+    cmd.append("-p")
+    cmd.append("_dut_" +".pdf")
+    cmd.append("-r")
+    cmd.append(device_under_test_mac)
+    cmd.append("-d")
+    print("Running " + " ".join(cmd))
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr = subprocess.PIPE)
+    p.wait()
+    for line in p.stdout:
+        print(line.decode('ascii').strip())
+    if p.stderr:
+        for line in p.stderr:
+            print(line.strip())
+

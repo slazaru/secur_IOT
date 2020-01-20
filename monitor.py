@@ -24,12 +24,14 @@ if __name__ == "__main__":
     case_sensitive = True
     my_event_handler = PatternMatchingEventHandler(patterns, ignore_patterns, ignore_directories, case_sensitive)
     # for testing vvv
+    '''
     dir = "/var/www/html/192.168.4.1_00:ec:0a:ca:e9:ea"
     id = "192.168.4.1_00:ec:0a:ca:e9:ea"
     p = Path(dir)
     p.mkdir(mode=0o755, parents=True, exist_ok=True)
     run_tests(dir,id)
     exit()
+    '''
     # testing ^^^
 
 def process_new_line():

@@ -1,2 +1,4 @@
 __pycache__/
 *.py.swp
+pcapGrok.log
+pcapgrok_dns_cache.xls
