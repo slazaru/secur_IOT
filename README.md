@@ -43,10 +43,12 @@ Put location of pcapviz main.py and makeclouds.py in file
 
 `pip3 install networkx`
 
-#### pcapviz
-`git clone https://github.com/fubar2/PcapViz.git`
-Put location of main.py in pcap_reporter.py
-`pip3 install pyth
+#### pcapgrok (pcap viz variant)
+`git clone https://github.com/fubar2/pcapGrok.git`
+Put absolute path of main.py in pcap_reporter.py
+`pip3 install -r requirements.txt`
+`sudo apt-get install -y graphviz-dev`
+`sudo apt-get install -y graphviz`
 
 #### nmap
 
