@@ -4,9 +4,8 @@
 pcapgrokmain = "/home/pi/opt/pcapGrok/pcapGrok.py"
 # location of makeclouds.py
 makeclouds = "/home/pi/secur_IOT/makeclouds.py"
-
-# note that the hosts file ("/etc/hosts" on debian) should contain entries
-# for the devices of interest in the testbed (eg, router, device, phone etc)
+# location of hosts file
+hostsfile = "/home/pi/secur_IOT/pcapgrok_hosts.xls"
 
 # add mac addresses of devices here
 # these can be retrieved from zeek dhcp logs, or by using nmap
@@ -35,7 +34,7 @@ os.chdir(dir)
 
 # run!
 # wordclouds
-
+'''
 cmd = []
 cmd.append("python3")
 cmd.append(makeclouds)
@@ -47,11 +46,10 @@ p.wait()
 if p.stderr:
     for line in p.stderr:
         print(line.strip())
-
+'''
 # pcapgrok
 
 # no whitelisting
-
 cmd = []
 cmd.append("python3")
 cmd.append(pcapgrokmain)
@@ -59,9 +57,12 @@ cmd.append("-i")
 cmd.append(infname)
 cmd.append("-o")
 cmd.append(dir)
+cmd.append("-hf")
+cmd.append(hostsfile)
+cmd.append("-n")
+cmd.append("2")
 cmd.append("-p")
 cmd.append(".pdf")
-cmd.append("-d")
 print("Running " + " ".join(cmd))
 p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr = subprocess.PIPE)
 p.wait()
@@ -70,8 +71,8 @@ for line in p.stdout:
 if p.stderr:
     for line in p.stderr:
         print(line.strip())
-
-# with device under test whitelisting
+'''
+# device under test whitelisting
 if device_under_test_mac != "":
     cmd = []
     cmd.append("python3")
@@ -80,6 +81,8 @@ if device_under_test_mac != "":
     cmd.append(infname)
     cmd.append("-o")
     cmd.append(dir)
+    cmd.append("-n")
+    cmd.append("2")
     cmd.append("-p")
     cmd.append("_dut_" +".pdf")
     cmd.append("-r")
@@ -94,3 +97,28 @@ if device_under_test_mac != "":
         for line in p.stderr:
             print(line.strip())
 
+# with phone whitelisting
+if phone_mac != "":
+    cmd = []
+    cmd.append("python3")
+    cmd.append(pcapgrokmain)
+    cmd.append("-i")
+    cmd.append(infname)
+    cmd.append("-o")
+    cmd.append(dir)
+    cmd.append("-n")
+    cmd.append("2")
+    cmd.append("-p")
+    cmd.append("_phone_" +".pdf")
+    cmd.append("-r")
+    cmd.append(phone_mac)
+    cmd.append("-d")
+    print("Running " + " ".join(cmd))
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr = subprocess.PIPE)
+    p.wait()
+    for line in p.stdout:
+        print(line.decode('ascii').strip())
+    if p.stderr:
+        for line in p.stderr:
+            print(line.strip())
+'''
