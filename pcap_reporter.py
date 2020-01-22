@@ -9,16 +9,15 @@ makeclouds = "/home/pi/secur_IOT/makeclouds.py"
 
 # add name:mac addresses pairs of devices you want to graph here
 # mac addresses can be retrieved from zeek dhcp logs, or by using nmap
-addresses = [("device_under_test","00:0c:43:9d:3d:25")]
-#device_under_test_mac = "00:0c:43:9d:3d:25"
-#phone_mac = "00:ec:0a:ca:e9:ea"
-#laptop_mac = ""
-#homeassistant_mac = ""
+addresses = [("device_under_test","00:0c:43:9d:3d:25"),
+("Phone","00:ec:0a:ca:e9:ea"),
+("Laptop", "a0:d3:7a:d9:d1:90")]
 
 import argparse
 import os
 import subprocess
 from pathlib import Path
+from shutil import rmtree
 
 parser = argparse.ArgumentParser(description='Pcap report generator')
 parser.add_argument('pcap', help='the pcap to process')
@@ -41,13 +40,26 @@ def wordclouds():
 	        print(line.strip())
 
 def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
+    if restrictmac == None:
+        suffix = "AllDevices"
+    else:
+        suffix = restrictmac[0] + "_" +restrictmac[1]
+    newdir = os.path.join(dir, suffix)
+    if os.path.exists(newdir):
+        rmtree(newdir)
+    p = Path(newdir)
+    p.mkdir(mode=0o755, parents=True, exist_ok=True)
     cmd = []
     cmd.append("python3")
     cmd.append(pcapgrokmain)
     cmd.append("-i")
     cmd.append(infname)
     cmd.append("-o")
-    cmd.append(dir)
+    cmd.append(newdir)
+    cmd.append("-E")
+    cmd.append("fdp")
+    cmd.append("-s")
+    cmd.append("box")
     if hf is not None:
         cmd.append("-hf")
         cmd.append(hf)
@@ -70,17 +82,28 @@ def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
     if p.stderr:
         for line in p.stderr:
             print(line.strip())
+    if restrictmac is not None:
+        reportfname = os.path.join(dir, restrictmac[0] + ".html")
+    else:
+        reportfname = os.path.join(dir, "AllDevices" + ".html")
+    f = open(reportfname, "w")
+    f.write("<html>\n")
+    for file in os.listdir(newdir):
+        f.write("<h3>" + file + "</h3>\n")
+        f.write("<embed src=\"" + suffix + "/" + file + "\" type=\"application/pdf\" width=\"98%\" height=\"100%\">\n")
+    f.write("<\/html>")
+    f.close()
 
+# delete all existing files
+if os.path.exists(dir):
+    rmtree(dir)
 # make path if it doesn't exist
 p = Path(dir)
 p.mkdir(mode=0o755, parents=True, exist_ok=True)
 
-# delete existing files
-filelist = [ f for f in os.listdir(dir) ]
-for f in filelist:
-    print("Removing existing file " + f)
-    os.remove(os.path.join(dir, f))
+#main
 
 #wordclouds()
+pcapgrok(hostsfile,2)
 for pair in addresses:
-    pcapgrok(hostsfile,1000,pair)
+    pcapgrok(hostsfile,2,pair)
