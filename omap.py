@@ -10,36 +10,33 @@ dir = ""
 ip = ""
 TTLOS = "Unknown"
 nmapOS = "Unknown"
-udpPortFile = ""
-tcpPortFile = ""
-allPortFile = ""
 enum4linuxDone = False
+debug = False
+reportFile = ""
 
-def runAllTests(directory, ipaddr):
+def runAllTests(directory, ipaddr, debugFlag=False):
+    global debug
+    if debugFlag: debug = True
     global dir
     global ip
     dir = directory
     ip = ipaddr
-    global udpPortFile
-    udpPortFile = dir + cfg.udpPortFile
-    global tcpPortFile
-    tcpPortFile = dir + cfg.tcpPortFile
-    global allPortFile
-    allPortFile = dir + cfg.allPortFile
-    #nmapQuickScan(dir, ip, 1, 1000, 'tcp')
-    #nmapQuickScan(dir, ip, 1, 1000, 'udp')
-    #nmapBasicScan(dir, ip, 1, 1000, 'tcp')
-    #nmapBasicScan(dir, ip, 1, 1000, 'udp')
-    #getOSFromTTL(dir, ip)
+    global reportFile
+    reportFile = os.path.join(directory, "Report.html")
+    if debug: print("reportFile is " + reportFile)
+    if debug: print("dir is " + dir)
+    if debug: print("ip is " + ip)
+    #nmapQuickScan(1, 1000, 'tcp')
+    #nmapQuickScan(1, 1000, 'udp')
+    #nmapBasicScan(1, 1000, 'tcp')
+    #nmapBasicScan(1, 1000, 'udp')
+    #getOSFromTTL()
     #getOSFromNmap()
-    #nmapDepthScan(dir, ip, 1, 1000, 'tcp')
-    #snmpcheck()
-    #snmpwalk()
-    dnsrecon("10.10.10.0", "24")
-    #nmapDepthScan(dir, ip, 1, 1000, 'udp')
+    nmapDepthScan(1, 1000, 'tcp')
+    nmapDepthScan(1, 1000, 'udp')
     print("\nAll tests finished!\n")
 
-def getOSFromTTL(dir, ip):
+def getOSFromTTL():
     global TTLOS
     cmd = []
     cmd.append("ping")
@@ -135,9 +132,12 @@ def extractAll(file):
     return lines
 
 # find open ports given port range and service
-def nmapQuickScan(dir, ip, lo, hi, service):
+def nmapQuickScan(lo, hi, service):
+    if debug: print("dir is " + dir)
     # construct file name
-    outf = dir + "/" + service + "_" + str(lo) + "-" + str(hi) + "_quick"
+    outf = service + "_" + str(lo) + "-" + str(hi) + "_quick"
+    outf = os.path.join(dir, outf)
+    if debug: print("nmapquickscan outf is " + outf)
     # construct command
     cmd = []
     for el in cfg.nmapCmd:
@@ -158,7 +158,7 @@ def nmapQuickScan(dir, ip, lo, hi, service):
     cmd.append('-oN')
     cmd.append(outf)
     cmd.append(ip)
-    print("Running " + ' '.join(cmd))
+    print("Running nmap quick scan: " + ' '.join(cmd))
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     p.wait()
     for line in p.stdout:
@@ -168,22 +168,22 @@ def nmapQuickScan(dir, ip, lo, hi, service):
     if len(ports) == 0:
         return
     # write results if open ports found
-    if service == 'udp':
-        print("Writing open ports to " + udpPortFile)
-        pfile = open(udpPortFile, "a")
-    else:
-        print("Writing open ports to " + tcpPortFile)
-        pfile = open(tcpPortFile, "a")
-    tfile = open(allPortFile, "a")
-    for port in ports:
-        pfile.write(port + "\n")
-        tfile.write(port + "\n")
-    pfile.close()
-    tfile.close()
+    #if service == 'udp':
+    #    print("Writing open ports to " + )
+    #    pfile = open(udpPortFile, "a")
+    #else:
+    #    print("Writing open ports to " + tcpPortFile)
+    #    pfile = open(tcpPortFile, "a")
+    #tfile = open(allPortFile, "a")
+    #for port in ports:
+    #    pfile.write(port + "\n")
+    #    tfile.write(port + "\n")
+    #pfile.close()
+    #tfile.close()
 
 # performs basic scans, relies on previous quickscan output
-def nmapBasicScan(dir, ip, lo, hi, service):
-    prevf = dir + "/" + service + "_" + str(lo) + "-" + str(hi) + "_quick"
+def nmapBasicScan(lo, hi, service):
+    prevf = os.path.join(dir, service + "_" + str(lo) + "-" + str(hi) + "_quick")
     if not os.path.exists(prevf):
         # havent performed a port scan yet, do this before continuing
         nmapQuickScan(dir, ip, lo, hi, service)
@@ -191,7 +191,7 @@ def nmapBasicScan(dir, ip, lo, hi, service):
     if len(pairs) == 0:
         return
     # filename
-    outf = dir + "/" + service + "_" + str(lo) + "-" + str(hi) + "_basic"
+    outf = os.path.join(dir, service + "_" + str(lo) + "-" + str(hi) + "_basic")
     resetFile(outf)
     # construct command
     cmd = []
@@ -230,8 +230,8 @@ def nmapBasicScan(dir, ip, lo, hi, service):
         print(line, flush=True)
 
 # performs depth scans, relies on previous basic output
-def nmapDepthScan(dir, ip, lo, hi, service):
-    prevf = dir + "/" + service + "_" + str(lo) + "-" + str(hi) + "_basic"
+def nmapDepthScan(lo, hi, service):
+    prevf = os.path.join(dir, service + "_" + str(lo) + "-" + str(hi) + "_basic")
     if not os.path.exists(prevf):
         # havent performed a basic scan yet, do this before continuing
         nmapBasicScan(dir, ip, lo, hi, service)
@@ -242,43 +242,43 @@ def nmapDepthScan(dir, ip, lo, hi, service):
     global enum4linuxDone
     for line in lines:
         if "https" in line:
-            #wfuzz(dir, ip, line, cfg.wfuzzWordlist1, cfg.wfuzzExtensions1, False, False, False)
-            #sslscan(dir, ip, line)
-            #nikto(dir, ip, line, True)
+            wfuzz(line, cfg.wfuzzWordlist1, cfg.wfuzzExtensions1, False, False, False)
+            sslscan(line)
+            nikto(line, True)
             pass
         elif "http" in line:
-            #wfuzz(dir, ip, line, cfg.wfuzzWordlist1, cfg.wfuzzExtensions1, False, False, False)
-            #nikto(dir, ip,line, False)
+            wfuzz(line, cfg.wfuzzWordlist1, cfg.wfuzzExtensions1, False, False, False)
+            nikto(line, False)
             pass
         elif "Joomla" in line:
-            joomscan(dir, ip, line)
+            joomscan(line)
         elif "WordPress" in line:
-            wpscan(dir, ip, line)
+            wpscan(line)
         elif "Drupal" in line:
-            droopescan(dir, ip, line)
+            droopescan(line)
         elif re.search("ssh", line, re.IGNORECASE) is not None:
-            #hydra(cfg.sshUsers1, cfg.sshPasswords1, line, "ssh")
+            hydra(cfg.sshUsers1, cfg.sshPasswords1, line, "ssh")
             pass
         elif re.search("ftps", line, re.IGNORECASE) is not None:
-            #hydra(cfg.sshUsers1, cfg.sshPasswords1, line, "ftps")
+            hydra(cfg.sshUsers1, cfg.sshPasswords1, line, "ftps")
             pass
         elif re.search("ftp", line, re.IGNORECASE) is not None:
-            #hydra(cfg.sshUsers1, cfg.sshPasswords1, line, "ftp")
+            hydra(cfg.sshUsers1, cfg.sshPasswords1, line, "ftp")
             pass
         elif re.search("telnet", line, re.IGNORECASE) is not None:
             hydra(cfg.sshUsers1, cfg.sshPasswords1, line, "telnet")
         elif "445/tcp" in line:
-            #smbmap(line)
+            smbmap(line)
             if enum4linuxDone == False:
-                #enum4linux()
+                enum4linux()
                 enum4linuxDone = True
-            #smbclient()
-            #smbnmapVulns()
+            smbclient()
+            smbnmapVulns()
             hydra(cfg.sshUsers1, cfg.sshPasswords1, line, "smb")
         elif "139/tcp" in line:
-            #smbmap(line)
+            smbmap(line)
             if enum4linuxDone == False:
-                #enum4linux()
+                enum4linux()
                 enum4linuxDone = True
         elif "161/udp" in line:
             snmpcheck()
@@ -290,7 +290,7 @@ def nmapDepthScan(dir, ip, lo, hi, service):
             dnsrecon("192.168.0.0", "24")
 
 def dnsrecon(subnet, bits):
-    outfname = dir + "/dnsrecon_" + subnet + "_" + bits
+    outfname = os.path.join(dir, "dnsrecon_" + subnet + "_" + bits)
     cmd = []
     cmd.append("dnsrecon")
     cmd.append("-r")
@@ -308,9 +308,11 @@ def dnsrecon(subnet, bits):
     outf.close()
     
 def snmpcheck():
-    outfname = dir + "/snmpcheck"
+    outfname = os.path.join(dir, "snmpcheck")
+    if debug: print("snmpcheck() outfname is " + outfname)
     cmd = []
-    cmd.append("snmpcheck-1.8.pl")
+    for c in cfg.snmpcheckcmd:
+        cmd.append(c)
     cmd.append("-t")
     cmd.append(ip)
     print("Running " + ' '.join(cmd))
@@ -321,22 +323,32 @@ def snmpcheck():
         line=line.decode('ascii')
         outf.write(line)
         print(line, flush=True)
+    for line in p.stderr:
+        line=line.decode('ascii')
+        outf.write(line)
+        print(line, flush=True)
     outf.close()
     
 def snmpwalk():
-    outfname = dir + "/snmpwalk"
+    outfname = os.path.join(dir, "snmpwalk")
     cmd = []
-    cmd.append("snmp-walk.py")
-    cmd.append("-Oa")
+    for c in cfg.snmpwalkcmd:
+        cmd.append(c)
     cmd.append("-c")
     cmd.append("public")
-    cmd.append("-v")
+    cmd.append("-version")
+    cmd.append("2")
+    cmd.append("-ip")
     cmd.append(ip)
     print("Running " + ' '.join(cmd))
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     p.wait()
     outf = open(outfname, "w")
     for line in p.stdout:
+        line=line.decode('ascii')
+        outf.write(line)
+        print(line, flush=True)
+    for line in p.stderr:
         line=line.decode('ascii')
         outf.write(line)
         print(line, flush=True)
@@ -350,7 +362,7 @@ def smbnmapVulns():
     cmd.append("--script")
     cmd.append("vuln")
     cmd.append("-oN")
-    cmd.append(dir + "/smbvulns")
+    cmd.append(os.path.join(dir, "smbvulns"))
     cmd.append(ip)
     print("Running " + ' '.join(cmd))
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -371,7 +383,7 @@ def smbclient():
     print("Running " + ' '.join(cmd))
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     p.wait()
-    outfname = dir + "/smbclient_login"
+    outfname = os.path.join(dir, "smbclient_login")
     outf = open(outfname, "w")
     for line in p.stdout:
         line=line.decode('ascii')
@@ -386,7 +398,7 @@ def enum4linux():
     print("Running " + ' '.join(cmd))
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     p.wait()
-    outfname = dir + "/enum4linux"
+    outfname = os.path.join(dir, "enum4linux")
     outf = open(outfname, "w")
     for line in p.stdout:
         line=line.decode('ascii')
@@ -403,7 +415,7 @@ def smbmap(line):
     print("Running " + ' '.join(cmd))
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     p.wait()
-    outfname = dir + "/smbmap_" + port
+    outfname = os.path.join(dir, "smbmap_" + port)
     outf = open(outfname, "w")
     for line in p.stdout:
         line=line.decode('ascii')
@@ -429,7 +441,7 @@ def hydra(userfile, passfile, line, protocol):
     cmd.append("-V")
     userbase = os.path.basename(userfile)
     passbase = os.path.basename(passfile)
-    outfname = dir + "/" + "hydra_" + port + "_" + protocol + "_" + userbase + "_" + passbase
+    outfname = os.path.join(dir, "hydra_" + port + "_" + protocol + "_" + userbase + "_" + passbase)
     print("Running " + ' '.join(cmd))
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     p.wait()
@@ -444,7 +456,7 @@ def hydra(userfile, passfile, line, protocol):
         outf.write(line)
     outf.close()
 
-def nikto(dir, ip, line, https=False):
+def nikto(line, https=False):
     info = line.split(" ")
     port = info[0].split("/")[0]
     cmd = []
@@ -460,7 +472,7 @@ def nikto(dir, ip, line, https=False):
     print("Running " + ' '.join(cmd))
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     p.wait()
-    outfname = dir + "/" + "nikto_" + port + "_"
+    outfname = os.path.join(dir, "nikto_" + port + "_")
     if https:
         outfname += "https"
     else:
@@ -468,11 +480,11 @@ def nikto(dir, ip, line, https=False):
     outf = open(outfname, "w")
     for line in p.stdout:
         line=line.decode('ascii')
-        print(line, flush=True)
+        print(line.strip(), flush=True)
         outf.write(line)
     outf.close()
 
-def joomscan(dir, ip, line):
+def joomscan(line):
     info = line.split(" ")
     port = info[0].split("/")[0]
     cmd = []
@@ -484,14 +496,14 @@ def joomscan(dir, ip, line):
     print("Running " + ' '.join(cmd))
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     p.wait()
-    outfname = dir + "/" + "joomscan_" + port + "_"
+    outfname = os.path.join(dir, "joomscan_" + port + "_")
     outf = open(outfname, "w")
     for line in p.stdout:
         line=line.decode('ascii')
         print(line, flush=True)
         outf.write(line)
 
-def wpscan(dir, ip, line):
+def wpscan(line):
     info = line.split(" ")
     port = info[0].split("/")[0]
     cmd = []
@@ -505,14 +517,14 @@ def wpscan(dir, ip, line):
     print("Running " + ' '.join(cmd))
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     p.wait()
-    outfname = dir + "/" + "wordpress_" + port + "_"
+    outfname = os.path.join(dir, "wordpress_" + port + "_")
     outf = open(outfname, "w")
     for line in p.stdout:
         line=line.decode('ascii')
         print(line, flush=True)
         outf.write(line)
 
-def droopescan(dir, ip, line):
+def droopescan(line):
     info = line.split(" ")
     port = info[0].split("/")[0]
     cmd = []
@@ -526,14 +538,14 @@ def droopescan(dir, ip, line):
     print("Running " + ' '.join(cmd))
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     p.wait()
-    outfname = dir + "/" + "droopescan_" + port + "_"
+    outfname = os.path.join(dir, "droopescan_" + port + "_")
     outf = open(outfname, "w")
     for line in p.stdout:
         line=line.decode('ascii')
         print(line, flush=True)
         outf.write(line)
 
-def sslscan(dir, ip, line):
+def sslscan(line):
     info = line.split(" ")
     port = info[0].split("/")[0]
     cmd = []
@@ -543,14 +555,14 @@ def sslscan(dir, ip, line):
     print("Running " + ' '.join(cmd))
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     p.wait()
-    outf = open(dir + "/" + "sslscan_" + port, "w")
+    outf = open(os.path.join(dir, "sslscan_" + port, "w"))
     for line in p.stdout:
         line=line.decode('ascii').strip()
         print(line, flush=True)
         outf.write(line)
     outf.close()
 
-def wfuzz(dir, ip, line, wordlist, extensions, https=False, useExtensions=False, recursive=False):
+def wfuzz(line, wordlist, extensions, https=False, useExtensions=False, recursive=False):
     info = line.split(" ")
     port = info[0].split("/")[0]
     cmd = []
@@ -565,7 +577,9 @@ def wfuzz(dir, ip, line, wordlist, extensions, https=False, useExtensions=False,
     if recursive == True:
         cmd.append("-R1")
     cmd.append("-o")
-    cmd.append(cfg.outputFormat)
+    cmd.append(cfg.wfuzzoutputFormat)
+    cmd.append("-t")
+    cmd.append(cfg.wfuzzthreads)
     target = ""
     if https == True:
         target = "https://"
@@ -580,7 +594,7 @@ def wfuzz(dir, ip, line, wordlist, extensions, https=False, useExtensions=False,
     print("Running " + ' '.join(cmd))
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     p.wait()
-    outfname = dir + "/" + "wfuzz_" + port + "_"
+    outfname = os.path.join(dir, "wfuzz_" + port + "_")
     if https == True:
         outfname += "https_"
     else:
@@ -589,11 +603,11 @@ def wfuzz(dir, ip, line, wordlist, extensions, https=False, useExtensions=False,
         outfname += "recursive_"
     if useExtensions:
         outfname += "extensions_"
-    outfname += wordlist + "." + cfg.outputFormat
+    outfname += os.path.basename(wordlist) + "." + cfg.wfuzzoutputFormat
     outf = open(outfname, "w")
     for line in p.stdout:
-        line=line.decode('ascii').strip()
-        print(line, flush=True)
+        line=line.decode('ascii')
+        print(line.strip(), flush=True)
         outf.write(line)
     outf.close()
 

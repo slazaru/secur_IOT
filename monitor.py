@@ -7,14 +7,14 @@ from pathlib import Path
 import subprocess
 import omap
 
-def run_tests(dir, id):
+def run_tests(dir, id, debugFlag=False):
     ip = id.split('_')[0]
     print("A device [ " + id + " ] just made a DHCP request.")
     txt = input("Would you like to run tests on this device? (y/n)")
     if txt != 'Y' and txt != 'y':
         print("Not running tests")
         return
-    omap.runAllTests(dir,ip)
+    omap.runAllTests(dir,ip,debugFlag)
 
 if __name__ == "__main__":
     os.chdir('/usr/local/zeek/logs/current')
@@ -24,14 +24,12 @@ if __name__ == "__main__":
     case_sensitive = True
     my_event_handler = PatternMatchingEventHandler(patterns, ignore_patterns, ignore_directories, case_sensitive)
     # for testing vvv
-    '''
-    dir = "/var/www/html/192.168.4.1_00:ec:0a:ca:e9:ea"
-    id = "192.168.4.1_00:ec:0a:ca:e9:ea"
+    dir = "/var/www/html/192.168.4.1_dc:a6:32:41:12:99"
+    id = "192.168.4.1_00:dc:a6:32:41:12:99"
     p = Path(dir)
     p.mkdir(mode=0o755, parents=True, exist_ok=True)
-    run_tests(dir,id)
+    run_tests(dir,id,True)
     exit()
-    '''
     # testing ^^^
 
 def process_new_line():
