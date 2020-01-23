@@ -80,14 +80,18 @@ To enable old openssl protocols (dangerous) https://gist.github.com/bmaupin/8cac
 https://github.com/pwnieexpress/pwn_plug_sources/blob/master/src/snmpcheck/snmpcheck-1.8.pl
 Add symlink to $PATH
 `chmod +x snmpcheck-1.8.pl`
-`ln -s /root/opt/snmpcheck/snmpcheck-1.8.pl /usr/local/bin`
+`ln -s /home/pi/opt/snmpcheck-1.8.pl /usr/local/bin`
+Get rid of /usr/bin/perl^M: bad interpreter: change shebang (the first line) in joomscan.pl to #!/usr/bin/perl --
+`sudo perl -MCPAN -e 'install Net::SNMP'`
+`sudo perl -MCPAN -e 'install Crypt::CBC'`
+`sudo perl -MCPAN -e 'install Number::Bytes::Human' `
 
 #### snmpwalk
 https://github.com/curesec/tools/blob/master/snmp/snmp-walk.py
 `pip install pysnmp`
 Add to $PATH
 `chmod +x snmp-walk.py`
-`ln -s /root/opt/snmpwalk/snmp-walk.py /usr/local/bin`
+`ln -s /home/pi/snmp-walk.py /usr/local/bin`
 
 #### nikto
 `sudo apt-get install nikto`
@@ -102,6 +106,7 @@ Add to $PATH
 Allow to be run anywhere: 
 `sudo ln -s /home/pi/opt/joomscan/joomscan.pl /usr/local/bin/`
 Get rid of /usr/bin/perl^M: bad interpreter: change shebang (the first line) in joomscan.pl to #!/usr/bin/perl --
+
 
 #### wpscan
 `sudo apt-get install gem`
