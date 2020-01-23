@@ -23,18 +23,36 @@ def runAllTests(directory, ipaddr, debugFlag=False):
     ip = ipaddr
     global reportFile
     reportFile = os.path.join(directory, "Report.html")
+    reportf = open(reportFile, "w")
+    reportf.write("<html>\n")
+    reportf.close()
     if debug: print("reportFile is " + reportFile)
     if debug: print("dir is " + dir)
     if debug: print("ip is " + ip)
-    #nmapQuickScan(1, 1000, 'tcp')
-    #nmapQuickScan(1, 1000, 'udp')
-    #nmapBasicScan(1, 1000, 'tcp')
-    #nmapBasicScan(1, 1000, 'udp')
-    #getOSFromTTL()
-    #getOSFromNmap()
+    nmapQuickScan(1, 1000, 'tcp')
+    nmapQuickScan(1, 1000, 'udp')
+    nmapBasicScan(1, 1000, 'tcp')
+    nmapBasicScan(1, 1000, 'udp')
+    getOSFromTTL()
+    getOSFromNmap()
     nmapDepthScan(1, 1000, 'tcp')
     nmapDepthScan(1, 1000, 'udp')
+    reportf = open(reportFile, "a")
+    reportf.write("</html>\n")
+    reportf.close()
     print("\nAll tests finished!\n")
+
+def appendToReport(fname, cmd):
+    reportf = open(reportFile, "a")
+    reportf.write("<h3>" + ' '.join(cmd) + "</h3>")
+    f = open(fname, "r")
+    for line in f:
+        if "<script" in line:
+            continue
+        reportf.write(line + "<br>")
+    reportf.write("<br>")
+    reportf.close()
+    f.close()
 
 def getOSFromTTL():
     global TTLOS
@@ -48,7 +66,7 @@ def getOSFromTTL():
     print("Running " + ' '.join(cmd))
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     p.wait()
-    outf = open(dir + cfg.pingOSFile, "w")
+    outf = open(os.path.join(dir, cfg.pingOSFile), "w")
     for line in p.stdout:
         line=line.decode('ascii')
         outf.write(line)
@@ -72,6 +90,7 @@ def getOSFromTTL():
         print("ttl from ping suggests the OS is " + TTLOS)
         outf.write("\nttl from ping suggests the OS is " + TTLOS)
     outf.close()
+    appendToReport(os.path.join(dir, cfg.pingOSFile), cmd)
 
 def getOSFromNmap():
     cmd = []
@@ -83,7 +102,7 @@ def getOSFromNmap():
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     p.wait()
     global nmapOS
-    outf = open(dir + cfg.nmapOSFile, "w")
+    outf = open(os.path.join(dir, cfg.nmapOSFile), "w")
     for line in p.stdout:
         line=line.decode('ascii')
         outf.write(line)
@@ -102,6 +121,7 @@ def getOSFromNmap():
         print("nmap -O suggests the OS is " + nmapOS)
         outf.write("\nnmap -O suggests the OS is " + nmapOS)
     outf.close()
+    appendToReport(os.path.join(dir, cfg.nmapOSFile), cmd)
 
 # given a file containing nmap output, extracts the port/protocol
 # returns a list of port:protocol pairs
@@ -167,19 +187,7 @@ def nmapQuickScan(lo, hi, service):
     ports = extractPorts(outf)
     if len(ports) == 0:
         return
-    # write results if open ports found
-    #if service == 'udp':
-    #    print("Writing open ports to " + )
-    #    pfile = open(udpPortFile, "a")
-    #else:
-    #    print("Writing open ports to " + tcpPortFile)
-    #    pfile = open(tcpPortFile, "a")
-    #tfile = open(allPortFile, "a")
-    #for port in ports:
-    #    pfile.write(port + "\n")
-    #    tfile.write(port + "\n")
-    #pfile.close()
-    #tfile.close()
+    appendToReport(outf, cmd)
 
 # performs basic scans, relies on previous quickscan output
 def nmapBasicScan(lo, hi, service):
@@ -228,6 +236,7 @@ def nmapBasicScan(lo, hi, service):
     for line in p.stdout:
         line=line.decode('ascii').strip()
         print(line, flush=True)
+    appendToReport(outf, cmd)
 
 # performs depth scans, relies on previous basic output
 def nmapDepthScan(lo, hi, service):
@@ -242,14 +251,12 @@ def nmapDepthScan(lo, hi, service):
     global enum4linuxDone
     for line in lines:
         if "https" in line:
-            wfuzz(line, cfg.wfuzzWordlist1, cfg.wfuzzExtensions1, False, False, False)
+            wfuzz(line, cfg.wfuzzWordlist1, cfg.wfuzzExtensions1, True, False, False)
             sslscan(line)
             nikto(line, True)
-            pass
         elif "http" in line:
             wfuzz(line, cfg.wfuzzWordlist1, cfg.wfuzzExtensions1, False, False, False)
             nikto(line, False)
-            pass
         elif "Joomla" in line:
             joomscan(line)
         elif "WordPress" in line:
@@ -258,25 +265,22 @@ def nmapDepthScan(lo, hi, service):
             droopescan(line)
         elif re.search("ssh", line, re.IGNORECASE) is not None:
             hydra(cfg.sshUsers1, cfg.sshPasswords1, line, "ssh")
-            pass
         elif re.search("ftps", line, re.IGNORECASE) is not None:
             hydra(cfg.sshUsers1, cfg.sshPasswords1, line, "ftps")
-            pass
         elif re.search("ftp", line, re.IGNORECASE) is not None:
             hydra(cfg.sshUsers1, cfg.sshPasswords1, line, "ftp")
-            pass
         elif re.search("telnet", line, re.IGNORECASE) is not None:
             hydra(cfg.sshUsers1, cfg.sshPasswords1, line, "telnet")
         elif "445/tcp" in line:
+            # now we know it's windows 
             smbmap(line)
             if enum4linuxDone == False:
                 enum4linux()
                 enum4linuxDone = True
             smbclient()
-            smbnmapVulns()
+            nmapScript("vuln", "445")
             hydra(cfg.sshUsers1, cfg.sshPasswords1, line, "smb")
         elif "139/tcp" in line:
-            smbmap(line)
             if enum4linuxDone == False:
                 enum4linux()
                 enum4linuxDone = True
@@ -288,6 +292,8 @@ def nmapDepthScan(lo, hi, service):
             dnsrecon("127.0.0.1", "24")
             dnsrecon("192.168.1.0", "24")
             dnsrecon("192.168.0.0", "24")
+        elif "554/tcp" in line:
+            nmapScript("rtsp-url-brute", "554")
 
 def dnsrecon(subnet, bits):
     outfname = os.path.join(dir, "dnsrecon_" + subnet + "_" + bits)
@@ -306,7 +312,8 @@ def dnsrecon(subnet, bits):
         outf.write(line)
         print(line, flush=True)
     outf.close()
-    
+    appendToReport(outfname, cmd)
+
 def snmpcheck():
     outfname = os.path.join(dir, "snmpcheck")
     if debug: print("snmpcheck() outfname is " + outfname)
@@ -328,7 +335,8 @@ def snmpcheck():
         outf.write(line)
         print(line, flush=True)
     outf.close()
-    
+    appendToReport(outfname, cmd)
+
 def snmpwalk():
     outfname = os.path.join(dir, "snmpwalk")
     cmd = []
@@ -353,16 +361,19 @@ def snmpwalk():
         outf.write(line)
         print(line, flush=True)
     outf.close()
+    appendToReport(outfname, cmd)
 
-def smbnmapVulns():
+def nmapScript(script, port):
     cmd = []
+    outfname = os.path.join(dir, "nmapScript_" + script + "_" + port)
     for el in cfg.nmapCmd:
         cmd.append(el)
-    cmd.append("-p445")
+    cmd.append("-p")
+    cmd.append(port)
     cmd.append("--script")
-    cmd.append("vuln")
+    cmd.append(script)
     cmd.append("-oN")
-    cmd.append(os.path.join(dir, "smbvulns"))
+    cmd.append(outfname)
     cmd.append(ip)
     print("Running " + ' '.join(cmd))
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -370,7 +381,8 @@ def smbnmapVulns():
     for line in p.stdout:
         line=line.decode('ascii')
         print(line, flush=True)
-    
+    appendToReport(outfname, cmd)
+
 def smbclient():
     cmd = []
     cmd.append("smbclient")
@@ -389,6 +401,7 @@ def smbclient():
         line=line.decode('ascii')
         print(line, flush=True)
         outf.write(line)
+    appendToReport(outfname, cmd)
 
 def enum4linux():
     cmd = []
@@ -404,6 +417,7 @@ def enum4linux():
         line=line.decode('ascii')
         print(line, flush=True)
         outf.write(line)
+    appendToReport(outfname, cmd)
 
 def smbmap(line):
     info = line.split(" ")
@@ -421,6 +435,7 @@ def smbmap(line):
         line=line.decode('ascii')
         print(line, flush=True)
         outf.write(line)
+    appendToReport(outfname, cmd)
 
 def hydra(userfile, passfile, line, protocol):
     info = line.split(" ")
@@ -455,6 +470,7 @@ def hydra(userfile, passfile, line, protocol):
         print(line, flush=True)
         outf.write(line)
     outf.close()
+    appendToReport(outfname, cmd)
 
 def nikto(line, https=False):
     info = line.split(" ")
@@ -483,6 +499,7 @@ def nikto(line, https=False):
         print(line.strip(), flush=True)
         outf.write(line)
     outf.close()
+    appendToReport(outfname, cmd)
 
 def joomscan(line):
     info = line.split(" ")
@@ -502,6 +519,7 @@ def joomscan(line):
         line=line.decode('ascii')
         print(line, flush=True)
         outf.write(line)
+    appendToReport(outfname, cmd)
 
 def wpscan(line):
     info = line.split(" ")
@@ -523,6 +541,7 @@ def wpscan(line):
         line=line.decode('ascii')
         print(line, flush=True)
         outf.write(line)
+    appendToReport(outfname, cmd)
 
 def droopescan(line):
     info = line.split(" ")
@@ -544,6 +563,7 @@ def droopescan(line):
         line=line.decode('ascii')
         print(line, flush=True)
         outf.write(line)
+    appendToReport(outfname, cmd)
 
 def sslscan(line):
     info = line.split(" ")
@@ -555,12 +575,14 @@ def sslscan(line):
     print("Running " + ' '.join(cmd))
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     p.wait()
-    outf = open(os.path.join(dir, "sslscan_" + port, "w"))
+    outfname = os.path.join(dir, "sslscan_" + port, "w")
+    outf = open(outfname, "w")
     for line in p.stdout:
         line=line.decode('ascii').strip()
         print(line, flush=True)
         outf.write(line)
     outf.close()
+    appendToReport(outfname, cmd)
 
 def wfuzz(line, wordlist, extensions, https=False, useExtensions=False, recursive=False):
     info = line.split(" ")
@@ -610,6 +632,7 @@ def wfuzz(line, wordlist, extensions, https=False, useExtensions=False, recursiv
         print(line.strip(), flush=True)
         outf.write(line)
     outf.close()
+    appendToReport(outfname, cmd)
 
 def resetFile(fname):
     f = open(fname, "w")

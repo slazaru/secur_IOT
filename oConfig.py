@@ -6,7 +6,7 @@ retries = '2'
 tcpScanType = '-sS'
 timing = '-T5'
 includeFiltered = False
-nmapOSFile = "/OS_from_nmap"
+nmapOSFile = "OS_from_nmap"
 maxRTT = "500ms"
 minRate = "500"
 
@@ -18,7 +18,7 @@ wfuzzthreads = "50"
 
 # ping
 pingCmd = ['ping']
-pingOSFile = "/OS_from_ttl"
+pingOSFile = "OS_from_ttl"
 
 # ssh brute forcing
 sshUsers1 = "/usr/share/wordlists/sshUsers1.txt"
