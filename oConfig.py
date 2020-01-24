@@ -46,6 +46,8 @@ sslscancmd = ['sslscan']
 # joomscan
 joomscancmd = ['joomscan.pl']
 
+# wpscan
+wpscancmd = ['wpscan']
 
 
 
