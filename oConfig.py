@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # nmap
-nmapCmd = ['sudo', 'nmap', '-Pn']
+nmapCmd = ['nmap', '-Pn']
 retries = '2'
 tcpScanType = '-sS'
 timing = '-T5'
@@ -15,6 +15,7 @@ wfuzzExtensions1 = "/usr/share/wordlists/dirb/extensions.txt"
 wfuzzWordlist1 = "/usr/share/wordlists/dirb/common.txt"
 wfuzzoutputFormat = "raw"
 wfuzzthreads = "50"
+wfuzzcmd = ['wfuzz']
 
 # ping
 pingCmd = ['ping']
@@ -32,3 +33,33 @@ snmpcheckcmd = ['snmpcheck-1.8.pl']
 
 # snmpwalk
 snmpwalkcmd = ['snmp-walk.py']
+
+# smbmap
+smbmapcmd = ['smbmap.py']
+
+# smbclient
+smbclientcmd = ['smbclient']
+
+# sslscan
+sslscancmd = ['sslscan']
+
+# joomscan
+joomscancmd = ['joomscan.pl']
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
