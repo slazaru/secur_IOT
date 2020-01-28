@@ -49,6 +49,16 @@ joomscancmd = ['joomscan.pl']
 # wpscan
 wpscancmd = ['wpscan']
 
+# droopescan
+droopescancmd = ['droopescan']
+
+# hydra
+hydracmd = ['hydra']
+
+# enum4linux
+enum4linuxcmd = ['enum4linux']
+
+
 
 
 
