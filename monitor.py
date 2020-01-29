@@ -17,7 +17,7 @@ def run_tests(dir, id, debugFlag=False):
     omap.runAllTests(dir,ip,debugFlag)
 
 if __name__ == "__main__":
-    os.chdir('/usr/local/zeek/logs/current')
+    os.chdir('/opt/zeek/logs/current')
     patterns = ["./dhcp.log"]
     ignore_patterns = ""
     ignore_directories = False

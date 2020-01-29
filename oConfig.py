@@ -11,8 +11,8 @@ maxRTT = "500ms"
 minRate = "500"
 
 # wfuzz
-wfuzzExtensions1 = "/usr/share/wordlists/dirb/extensions.txt"
-wfuzzWordlist1 = "/usr/share/wordlists/dirb/common.txt"
+wfuzzExtensions1 = "/usr/share/wordlists/extensions.txt"
+wfuzzWordlist1 = "/usr/share/wordlists/common.txt"
 wfuzzoutputFormat = "raw"
 wfuzzthreads = "50"
 wfuzzcmd = ['wfuzz']
@@ -56,7 +56,7 @@ droopescancmd = ['droopescan']
 hydracmd = ['hydra']
 
 # enum4linux
-enum4linuxcmd = ['enum4linux']
+enum4linuxcmd = ['enum4linux.pl']
 
 
 
