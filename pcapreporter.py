@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 # coordinator for makeclouds and pcapgrok
-
 # location of pcapgrok main.py
 pcapgrokmain = "/root/pcapGrok/pcapGrok.py"
 # location of makeclouds.py
