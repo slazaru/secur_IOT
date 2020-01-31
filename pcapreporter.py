@@ -25,7 +25,6 @@ if args.dir:
     dir = os.path.abspath(args.dir)
 else:
     dir = os.path.join('/var/www/html/', os.path.basename(infname))
-print("dir is " + dir)
 
 def wordclouds():
     cmd = []
@@ -77,7 +76,6 @@ def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
     else:
         reportfname = os.path.join(dir, "AllDevices" + ".html")
     for file in os.listdir(newdir):
-        print("file[-3:] = " + file[-3:])
         if file[-3:] != "pdf": #only grab pdfs
             continue
         cmd = []
@@ -96,7 +94,7 @@ def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
             continue
         if curr == 0:
             f.write("<tr style=\"height:100%;\">\n")
-        f.write("<th><a href=\"" + os.path.join(newdir,file) + "\"><img src=\"" + os.path.join(newdir,file) + "-1.png" + "\" style=\"width:100%;\"></a></th>")
+        f.write("<th><a href=\"" + os.path.join(suffix,file) + "\"><img src=\"" + os.path.join(suffix,file) + "-1.png" + "\" style=\"width:100%;\"></a></th>")
         curr = curr +1
         if curr % cols == 0:
             curr = 0
@@ -114,7 +112,7 @@ p.mkdir(mode=0o755, parents=True, exist_ok=True)
 if args.hostsfile:
     print("\nhostsfile was included")
     # run with MAC address restrictions per line in hostsfile
-    f = open(args.hostsfile, 'r')
+    f = open(os.path.abspath(args.hostsfile), 'r')
     for line in f:
         line = line.split(',')
         if line[0] == 'ip':
