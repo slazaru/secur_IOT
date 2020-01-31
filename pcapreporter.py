@@ -15,16 +15,13 @@ from pathlib import Path
 from shutil import rmtree
 
 parser = argparse.ArgumentParser(description='Pcap report generator')
-parser.add_argument('pcap', help='Tthe pcap to process')
-parser.add_argument('-d', '--dir', help='The directory to save the output. By default it is saved to /var/www/html/PCAPFILENAME')
+parser.add_argument('pcap', help='The pcap to process')
+parser.add_argument('mac', help='The mac address of the device under test')
 parser.add_argument('-hf', '--hostsfile', help='The hostsfile to use. The hostsfile labels the nodes in the graphs produced. It is recommended to include a hostsfile. An example hostsfile can be found in /root/pcapGrok/example_hostsfile.xls')
 args = parser.parse_args()
 
 infname = os.path.abspath(args.pcap)
-if args.dir:
-    dir = os.path.abspath(args.dir)
-else:
-    dir = os.path.join('/var/www/html/', os.path.basename(infname))
+dir = os.path.join('/var/www/html/', args.mac)
 
 def wordclouds():
     cmd = []
