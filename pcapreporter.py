@@ -5,6 +5,8 @@
 pcapgrokmain = "/root/pcapGrok/pcapGrok.py"
 # location of makeclouds.py
 makeclouds = "/root/secur_IOT/makeclouds.py"
+# columns in reports
+cols = 3
 
 import argparse
 import os
@@ -74,12 +76,31 @@ def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
         reportfname = os.path.join(dir, restrictmac[0] + ".html")
     else:
         reportfname = os.path.join(dir, "AllDevices" + ".html")
-    f = open(reportfname, "w")
-    f.write("<html>\n")
     for file in os.listdir(newdir):
-        f.write("<h3>" + file + "</h3>\n")
-        f.write("<embed src=\"" + suffix + "/" + file + "\" type=\"application/pdf\" width=\"98%\" height=\"100%\">\n")
-    f.write("<\/html>")
+        print("file[-3:] = " + file[-3:])
+        if file[-3:] != "pdf": #only grab pdfs
+            continue
+        cmd = []
+        cmd.append("pdftoppm")
+        cmd.append(os.path.join(newdir, file))
+        cmd.append(os.path.join(newdir, file))
+        cmd.append("-png")
+        print("running " + " ".join(cmd))
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr = subprocess.PIPE, shell=False)
+        p.wait()
+    f = open(reportfname, "w")
+    f.write("<html>\n<table border=\"1\">\n")
+    curr = 0
+    for file in os.listdir(newdir):
+        if file[-3:] != "pdf": #only grab pdfs
+            continue
+        if curr == 0:
+            f.write("<tr style=\"height:100%;\">\n")
+        f.write("<th><a href=\"" + os.path.join(newdir,file) + "\"><img src=\"" + os.path.join(newdir,file) + "-1.png" + "\" style=\"width:100%;\"></a></th>")
+        curr = curr +1
+        if curr % cols == 0:
+            curr = 0
+    f.write("</table>\n</html>")
     f.close()
     print("\nreportfname : " + reportfname)
     print("\nnewdir : " + newdir)
