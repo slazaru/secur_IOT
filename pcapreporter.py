@@ -22,6 +22,7 @@ parser.add_argument('-hf', '--hostsfile', help='The hostsfile to use. The hostsf
 args = parser.parse_args()
 
 infname = os.path.abspath(args.pcap)
+pcaplist = []
 if ".pcap" not in infname:
     # assume the user wants a time interval instead
     match = re.search('[\d]{1,2}m', infname) # minutes
@@ -30,7 +31,9 @@ if ".pcap" not in infname:
     match = re.search('[\d]{1,2}h', infname) # hours
     if match:
         print(match[0][:2])
-    exit()
+    exit() # TODO
+else:
+    pcaplist.append(infname)
 dir = os.path.join('/var/www/html/')
 
 def wordclouds():
@@ -112,7 +115,8 @@ def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
     print("\nreport written to " + reportfname)
 
 # the pcap for a report based on mac + pcaptimeframe
-dir = os.path.join(dir, mac, pcap)
+dirname = os.path.basename(args.mac) + "_" + os.path.basename(args.pcap)
+dir = os.path.join(dir, dirname)
 p = Path(dir)
 p.mkdir(mode=0o755, parents=True, exist_ok=True)
 
@@ -141,4 +145,20 @@ for line in f:
     pcapgrok(hostsfile, 2, pair)
 # run once without MAC address restrictions
 pcapgrok(args.hostsfile,2)
+
+# copy pcaps over for safekeeping
+for pcap in pcaplist:
+    cmd = []
+    cmd.append("cp")
+    cmd.append(pcap) # careful abs path vs relative
+    cmd.append(dir)
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr = subprocess.PIPE, shell=False)
+    p.wait()
+
+# regenerate home page
+cmd = []
+cmd.append("python3")
+cmd.append("/root/secur_iot/generate.py")
+p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr = subprocess.PIPE, shell=False)
+
 print("\ndone!")

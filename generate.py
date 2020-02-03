@@ -56,17 +56,19 @@ templatestr = '''
 
 # results page
 f = open(os.path.join(basepath, "index.html"), "w")
-resultstr = "<br><table border=\"1\">\n"
-for file in os.listdir(basepath):
+resultstr = "<br><table class=\"table\" border=\"0\">\n"
+for file in os.listdir(basepath): # grab html reports
     if not os.path.isdir(os.path.join(basepath, file)): continue
     resultstr += "<tr style=\"height:100%;\">"
     resultstr += "<th><p class=\"font-weight-bold\">" + file + "</p></th>"
     for el in os.listdir(os.path.join(basepath,file)):
         if ".html" in el:
             resultstr += "<th><a href=\"./" + os.path.join(file, el) + "\">" + el[:-5] + "</a></th>\n"
+        if ".pcap" in el:
+            resultstr += "<th><a href=\"./" + os.path.join(file, el) + "\">" + el + "</a></th>\n"
     resultstr+= "</tr>\n"
 resultstr += "</table>"
-f.write(templatestr.format('Results', 'Here are the test results' + resultstr, ''))
+f.write(templatestr.format('Results', '', resultstr))
 f.close()
 
 # about page
