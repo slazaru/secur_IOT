@@ -32,14 +32,13 @@ templatestr = '''
     </div>
   </div>
 </nav>
-<div class="jumbotron">
-  <div class="container text-center">
-    <h3>{0}</h3>
-    <p>{1}</p>
-  </div>
+<div class="container text-center">
+<h3>{0}</h3>
+<p>{1}</p>
 </div>
 <div class="container-fluid bg-3 text-center">
 {2}
+{3}
 </div>
 <br>
 <footer class="container-fluid text-center">
@@ -54,11 +53,12 @@ templatestr = '''
 # {1}: page info
 # {2}: page content
 
-# results page
+# pcap reports
 f = open(os.path.join(basepath, "index.html"), "w")
-resultstr = "<br><table class=\"table\" border=\"0\">\n"
-for file in os.listdir(basepath): # grab html reports
+resultstr = "<h4>Pcap reports</h4><br><table class=\"table\" border=\"0\">\n"
+for file in os.listdir(basepath): #grab pcapreport dirs
     if not os.path.isdir(os.path.join(basepath, file)): continue
+    if "pcap" not in file: continue
     resultstr += "<tr style=\"height:100%;\">"
     resultstr += "<th><p class=\"font-weight-bold\">" + file + "</p></th>"
     for el in os.listdir(os.path.join(basepath,file)):
@@ -68,16 +68,29 @@ for file in os.listdir(basepath): # grab html reports
             resultstr += "<th><a href=\"./" + os.path.join(file, el) + "\">" + el + "</a></th>\n"
     resultstr+= "</tr>\n"
 resultstr += "</table>"
-f.write(templatestr.format('Results', '', resultstr))
+
+# attack script reports
+attackstr = "<h4>Attack script reports</h4><br><table class=\"table\" border=\"0\">\n"
+for file in os.listdir(basepath): #grab attack script dirs
+    if not os.path.isdir(os.path.join(basepath, file)): continue
+    if "attack" not in file: continue
+    attackstr += "<tr style=\"height:100%;\">"
+    attackstr += "<th><p class=\"font-weight-bold\">" + file + "</p></th>"
+    for el in os.listdir(os.path.join(basepath,file)):
+        attackstr += "<th><a href=\"./" + os.path.join(file, el) + "\">" + el + "</a></th>\n"
+    attackstr+= "</tr>\n"
+attackstr += "</table>"
+
+f.write(templatestr.format('Results', '', resultstr, attackstr))
 f.close()
 
 # about page
 f = open(os.path.join(basepath, "about.html"), "w")
-f.write(templatestr.format('About', 'A testbed for IoT devices', ''))
+f.write(templatestr.format('About', 'A testbed for IoT devices', '', ''))
 f.close()
 
 # help page
 f = open(os.path.join(basepath, "help.html"), "w")
-f.write(templatestr.format('Help', 'The best way to get help is to follow the instructions on the git page', ''))
+f.write(templatestr.format('Help', 'The best way to get help is to follow the instructions on the git page', '', ''))
 f.close()
 

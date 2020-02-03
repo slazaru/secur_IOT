@@ -115,7 +115,7 @@ def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
     print("\nreport written to " + reportfname)
 
 # the pcap for a report based on mac + pcaptimeframe
-dirname = os.path.basename(args.mac) + "_" + os.path.basename(args.pcap)
+dirname = os.path.basename(args.mac) + "_" + os.path.basename(args.pcap) + "_" + "pcapreport"
 dir = os.path.join(dir, dirname)
 p = Path(dir)
 p.mkdir(mode=0o755, parents=True, exist_ok=True)
@@ -160,5 +160,8 @@ cmd = []
 cmd.append("python3")
 cmd.append("/root/secur_iot/generate.py")
 p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr = subprocess.PIPE, shell=False)
+if p.stderr:
+    for line in p.stderr:
+        print(line)
 
 print("\ndone!")

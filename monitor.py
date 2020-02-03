@@ -15,6 +15,15 @@ def run_tests(dir, id, debugFlag=False):
         print("Not running tests")
         return
     omap.runAllTests(dir,ip,debugFlag)
+    # regenerate home page
+    cmd = []
+    cmd.append("python3")
+    cmd.append("/root/secur_iot/generate.py")
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr = subprocess.PIPE, shell=False)
+    if p.stderr:
+        for line in p.stderr:
+            print(line)
+
 
 if __name__ == "__main__":
     os.chdir('/opt/zeek/logs/current')
@@ -24,7 +33,7 @@ if __name__ == "__main__":
     case_sensitive = True
     my_event_handler = PatternMatchingEventHandler(patterns, ignore_patterns, ignore_directories, case_sensitive)
     # for testing vvv
-    dir = "/var/www/html/192.168.4.1_dc:a6:32:41:12:99"
+    dir = "/var/www/html/192.168.4.1_dc:a6:32:41:12:99_attack"
     id = "192.168.4.1_00:dc:a6:32:41:12:99"
     p = Path(dir)
     p.mkdir(mode=0o755, parents=True, exist_ok=True)
@@ -40,7 +49,7 @@ def process_new_line():
     new_line = lines[-1]
     vals = re.split(r'\t+', new_line)
     id = vals[2] + "_" + vals[4]
-    dir = '/var/www/html/' + id
+    dir = os.path.join('/var/www/html/', id + "_" + "attack")
     p = Path(dir)
     p.mkdir(mode=0o755, parents=True, exist_ok=True)
     run_tests(dir, id)
