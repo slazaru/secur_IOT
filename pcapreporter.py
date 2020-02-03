@@ -13,15 +13,25 @@ import os
 import subprocess
 from pathlib import Path
 from shutil import rmtree
+import re
 
 parser = argparse.ArgumentParser(description='Pcap report generator')
-parser.add_argument('pcap', help='The pcap to process')
+parser.add_argument('pcap', help='The pcap to process. Can be a single file, multiple files with *, or an amount of time, for example \'1h10m\' would be the last 1 hour and 10 minutes of pcaps captured on the testbed')
 parser.add_argument('mac', help='The mac address of the device under test')
-parser.add_argument('-hf', '--hostsfile', help='The hostsfile to use. The hostsfile labels the nodes in the graphs produced. It is recommended to include a hostsfile. An example hostsfile can be found in /root/pcapGrok/example_hostsfile.xls')
+parser.add_argument('-hf', '--hostsfile', help='The hostsfile to use. The hostsfile labels the nodes in the graphs produced. By default, the hostsfile in /root/exampe_hostsfile will be used')
 args = parser.parse_args()
 
 infname = os.path.abspath(args.pcap)
-dir = os.path.join('/var/www/html/', args.mac)
+if ".pcap" not in infname:
+    # assume the user wants a time interval instead
+    match = re.search('[\d]{1,2}m', infname) # minutes
+    if match:
+        print(match[0][:2])
+    match = re.search('[\d]{1,2}h', infname) # hours
+    if match:
+        print(match[0][:2])
+    exit()
+dir = os.path.join('/var/www/html/')
 
 def wordclouds():
     cmd = []
@@ -101,30 +111,34 @@ def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
     print("\nnewdir : " + newdir)
     print("\nreport written to " + reportfname)
 
-# make path if it doesn't exist
+# the pcap for a report based on mac + pcaptimeframe
+dir = os.path.join(dir, mac, pcap)
 p = Path(dir)
 p.mkdir(mode=0o755, parents=True, exist_ok=True)
 
+# run wordclouds
 #wordclouds()
+
+# run pcapgrok
+hostsfile = ''
 if args.hostsfile:
-    print("\nhostsfile was included")
-    # run with MAC address restrictions per line in hostsfile
-    f = open(os.path.abspath(args.hostsfile), 'r')
-    for line in f:
-        line = line.split(',')
-        if line[0] == 'ip':
-            continue # skip header line
-        if len(line) != 6:
-            print("\nimproperly formatted line in supplied hostsfile!")
-            continue
-        ipaddr = line[0].strip()
-        macaddr = line[5].strip()
-        name = line[1].strip()
-        pair = (name, macaddr)
-        pcapgrok(args.hostsfile, 2, pair)
-    # run once without MAC address restrictions
-    pcapgrok(args.hostsfile,2)
+    hostsfile = args.hostsfile
 else:
-    print("\nWARNING: no hostsfile supplied. it is recommended to run this program using a hostsfile. for more information, run with -h")
-    pcapgrok(None,2)
+    hostsfile = '/root/example_hostsfile'
+# run with MAC address restrictions per line in hostsfile
+f = open(os.path.abspath(hostsfile), 'r')
+for line in f:
+    line = line.split(',')
+    if line[0] == 'ip':
+        continue # skip header line
+    if len(line) != 6:
+        print("\nimproperly formatted line in supplied hostsfile!")
+        continue
+    ipaddr = line[0].strip()
+    macaddr = line[5].strip()
+    name = line[1].strip()
+    pair = (name, macaddr)
+    pcapgrok(hostsfile, 2, pair)
+# run once without MAC address restrictions
+pcapgrok(args.hostsfile,2)
 print("\ndone!")
