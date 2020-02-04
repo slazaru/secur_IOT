@@ -2,7 +2,6 @@
 # ross lazarus
 # tcpdump -i en0 -w "testbed_%Y-%m-%d-%H:%M:%S.pcap" -G 3600 
 
-
 import os
 from datetime import datetime
 from time import localtime,time
@@ -39,6 +38,7 @@ class pcapStore():
 		for dirName, subdirList, fileList in os.walk(self.pcapsFolder):	
 			for pfn in fileList:
 				fs = pfn.split('_') # assume name works this way...
+				print(str(fs))
 				if len(fs) == 2:
 					fn = fs[1] 
 					ppath = os.path.join(dirName, pfn)

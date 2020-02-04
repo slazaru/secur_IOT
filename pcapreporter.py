@@ -53,7 +53,7 @@ def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
     cmd.append("python3")
     cmd.append(pcapgrokmain)
     cmd.append("-i")
-    cmd.append(infname)
+    cmd.append(pcapLocation)
     cmd.append("-o")
     cmd.append(newdir)
     cmd.append("-E")
@@ -110,13 +110,15 @@ def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
     print("\nnewdir : " + newdir)
     print("\nreport written to " + reportfname)
 
-# the pcap report name is based on mac + pcaptimeframe/pcapname
+# the pcap report dir is mac_pcaptimeframe/pcapname_pcapreport
 dir = os.path.join('/var/www/html/')
 dirname = os.path.basename(args.mac) + "_" + os.path.basename(args.pcap) + "_" + "pcapreport"
 dir = os.path.join(dir, dirname)
 p = Path(dir)
 p.mkdir(mode=0o755, parents=True, exist_ok=True)
 
+# if user specifies multiple pcaps, merge them together, put it in report
+# dir, and then use this merged pcap for processing
 inputtype = ''
 pcaplocation = ''
 # determine type of pcap input
@@ -125,7 +127,7 @@ if ".pcap" in args.pcap: # single pcap
     infname = os.path.abspath(args.pcap)
     cmd = []
     cmd.append("cp")
-    cmd.append(infname) # careful abs path vs relative
+    cmd.append(os.path.abspath(infname)) # careful abs path vs relative
     pcaplocation = os.path.join(dir, infname)
     cmd.append(pcaplocation)
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
@@ -139,12 +141,11 @@ else: # time interval separated by = eg 2020-02-03-18:30:00=2020-02-03-19:00:00
     ps = pcap_period_extract.pcapStore(pcapstoreLocation)
     sdt = datetime.strptime(interval[0], FSDTFORMAT)
     edt = datetime.strptime(interval[1], FSDTFORMAT)
-    dest = os.path.join(dir, args.pcap + ".pcap")
+    pcapLocation = os.path.join(dir, args.mac + "_" + args.pcap + ".pcap")
     print("sdt is " + str(sdt))
     print("edt is " + str(edt))
-    print("dest is " + dest)
-    ps.writePeriod(sdt, edt, dest)
-    exit()
+    print("dest is " + pcapLocation)
+    ps.writePeriod(sdt, edt, pcapLocation)
 '''
 if ".pcap" not in infname:
     # assume the user wants a time interval instead
@@ -156,12 +157,6 @@ if ".pcap" not in infname:
         print(match[0][:2])
     exit() # TODO
 '''
-
-# the pcap report name is based on mac + pcaptimeframe/pcapname
-dirname = os.path.basename(args.mac) + "_" + os.path.basename(args.pcap) + "_" + "pcapreport"
-dir = os.path.join(dir, dirname)
-p = Path(dir)
-p.mkdir(mode=0o755, parents=True, exist_ok=True)
 
 # run wordclouds
 #wordclouds()
@@ -192,7 +187,7 @@ pcapgrok(args.hostsfile,2)
 # regenerate home page
 cmd = []
 cmd.append("python3")
-cmd.append("/root/secur_iot/generate.py")
+cmd.append("/root/secur_IOT/generate.py")
 p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr = subprocess.PIPE, shell=False)
 if p.stderr:
     for line in p.stderr:

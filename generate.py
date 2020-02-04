@@ -62,12 +62,14 @@ for file in os.listdir(basepath): #grab pcapreport dirs
     if not os.path.isdir(os.path.join(basepath, file)): continue
     if "pcap" not in file: continue
     resultstr += "<tr style=\"height:100%;\">"
-    resultstr += "<th><p class=\"font-weight-bold\">" + file + "</p></th>"
+    name = file.split("_")
+    resultstr += "<th><p class=\"font-weight-bold\">" + name[0] + "</p></th>"
+    resultstr += "<th><p class=\"font-weight-bold\">" + name[1] + "</p></th>"
     for el in os.listdir(os.path.join(basepath,file)):
         if ".html" in el:
             resultstr += "<th><a href=\"./" + os.path.join(file, el) + "\">" + el[:-5] + "</a></th>\n"
         if ".pcap" in el:
-            resultstr += "<th><a href=\"./" + os.path.join(file, el) + "\">" + el + "</a></th>\n"
+            resultstr += "<th><a href=\"./" + os.path.join(file, el) + "\">" + el.split(".")[1] + "</a></th>\n"
     resultstr+= "</tr>\n"
 resultstr += "</table>"
 
