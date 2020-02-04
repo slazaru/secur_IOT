@@ -183,7 +183,7 @@ if ".pcap" not in infname:
 
 # run wordclouds
 wordclouds()
-'''
+
 # run pcapgrok
 hostsfile = ''
 if args.hostsfile:
@@ -206,7 +206,7 @@ for line in f:
     pcapgrok(hostsfile, 2, pair)
 # run once without MAC address restrictions
 pcapgrok(args.hostsfile,2)
-'''
+
 # regenerate home page
 cmd = []
 cmd.append("python3")
