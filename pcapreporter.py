@@ -36,10 +36,33 @@ def wordclouds():
     cmd = []
     cmd.append("python3")
     cmd.append(makeclouds)
-    cmd.append(infname)
-    cmd.append(dir)
+    cmd.append(pcapLocation)
+    suffix = "wordclouds"
+    newdir = os.path.join(dir, "wordclouds")
+    p = Path(newdir)
+    p.mkdir(mode=0o755, parents=True, exist_ok=True)
+    cmd.append(newdir)
     print("Running " + " ".join(cmd))
-    subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr = subprocess.PIPE, shell=False)
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr = subprocess.PIPE, shell=False)
+    p.wait()
+    reportfname = os.path.join(dir, "wordclouds" + ".html")
+    f = open(reportfname, "w")
+    f.write("<html>\n<table border=\"1\">\n")
+    curr = 0
+    for file in os.listdir(newdir):
+        if file[-3:] != "png": #only grab pdfs
+            continue
+        if curr == 0:
+            f.write("<tr style=\"height:100%;\">\n")
+        f.write("<th><a href=\"" + os.path.join(suffix,file) + "\"><img src=\"" + os.path.join(suffix,file) + "\" style=\"width:100%;\"></a></th>")
+        curr = curr +1
+        if curr % cols == 0:
+            curr = 0
+    f.write("</table>\n</html>")
+    f.close()
+    print("\nreportfname : " + reportfname)
+    print("\nnewdir : " + newdir)
+    print("\nreport written to " + reportfname)
 
 def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
     if restrictmac == None:
@@ -159,8 +182,8 @@ if ".pcap" not in infname:
 '''
 
 # run wordclouds
-#wordclouds()
-
+wordclouds()
+'''
 # run pcapgrok
 hostsfile = ''
 if args.hostsfile:
@@ -183,7 +206,7 @@ for line in f:
     pcapgrok(hostsfile, 2, pair)
 # run once without MAC address restrictions
 pcapgrok(args.hostsfile,2)
-
+'''
 # regenerate home page
 cmd = []
 cmd.append("python3")
