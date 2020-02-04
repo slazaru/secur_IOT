@@ -7,6 +7,10 @@ pcapgrokmain = "/root/pcapGrok/pcapGrok.py"
 makeclouds = "/root/secur_IOT/makeclouds.py"
 # columns in reports
 cols = 3
+# date format for interval input
+FSDTFORMAT = '%Y-%m-%d-%H:%M:%S'
+# pcapstore location
+pcapstoreLocation = '/root/captures'
 
 import argparse
 import os
@@ -14,27 +18,19 @@ import subprocess
 from pathlib import Path
 from shutil import rmtree
 import re
+import pcap_period_extract
+from datetime import datetime
+from time import localtime,time
+import dateutil
+from scapy.all import *
+import bisect
+import pathlib
 
 parser = argparse.ArgumentParser(description='Pcap report generator')
-parser.add_argument('pcap', help='The pcap to process. Can be a single file, multiple files with *, or an amount of time, for example \'1h10m\' would be the last 1 hour and 10 minutes of pcaps captured on the testbed')
+parser.add_argument('pcap', help='The pcap to process. Can be a single .pcap file or a timeinterval delineated with \'=\' (eg 2020-02-03-18:30:00=2020-02-03-19:00:00) or an amount of time, for example \'1h10m\' would be the last 1 hour and 10 minutes of pcaps captured on the testbed')
 parser.add_argument('mac', help='The mac address of the device under test')
 parser.add_argument('-hf', '--hostsfile', help='The hostsfile to use. The hostsfile labels the nodes in the graphs produced. By default, the hostsfile in /root/exampe_hostsfile will be used')
 args = parser.parse_args()
-
-infname = os.path.abspath(args.pcap)
-pcaplist = []
-if ".pcap" not in infname:
-    # assume the user wants a time interval instead
-    match = re.search('[\d]{1,2}m', infname) # minutes
-    if match:
-        print(match[0][:2])
-    match = re.search('[\d]{1,2}h', infname) # hours
-    if match:
-        print(match[0][:2])
-    exit() # TODO
-else:
-    pcaplist.append(infname)
-dir = os.path.join('/var/www/html/')
 
 def wordclouds():
     cmd = []
@@ -114,7 +110,54 @@ def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
     print("\nnewdir : " + newdir)
     print("\nreport written to " + reportfname)
 
-# the pcap for a report based on mac + pcaptimeframe
+# the pcap report name is based on mac + pcaptimeframe/pcapname
+dir = os.path.join('/var/www/html/')
+dirname = os.path.basename(args.mac) + "_" + os.path.basename(args.pcap) + "_" + "pcapreport"
+dir = os.path.join(dir, dirname)
+p = Path(dir)
+p.mkdir(mode=0o755, parents=True, exist_ok=True)
+
+inputtype = ''
+pcaplocation = ''
+# determine type of pcap input
+if ".pcap" in args.pcap: # single pcap
+    inputtype = "s" # single pcap input
+    infname = os.path.abspath(args.pcap)
+    cmd = []
+    cmd.append("cp")
+    cmd.append(infname) # careful abs path vs relative
+    pcaplocation = os.path.join(dir, infname)
+    cmd.append(pcaplocation)
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
+    p.wait()
+    if p.stderr:
+        for l in p.stderr: print(l)
+else: # time interval separated by = eg 2020-02-03-18:30:00=2020-02-03-19:00:00
+    inputtype = "i" # time interval input
+    interval = args.pcap.split('=')
+    print("interval is " + str(interval))
+    ps = pcap_period_extract.pcapStore(pcapstoreLocation)
+    sdt = datetime.strptime(interval[0], FSDTFORMAT)
+    edt = datetime.strptime(interval[1], FSDTFORMAT)
+    dest = os.path.join(dir, args.pcap + ".pcap")
+    print("sdt is " + str(sdt))
+    print("edt is " + str(edt))
+    print("dest is " + dest)
+    ps.writePeriod(sdt, edt, dest)
+    exit()
+'''
+if ".pcap" not in infname:
+    # assume the user wants a time interval instead
+    match = re.search('[\d]{1,2}m', infname) # minutes
+    if match:
+        print(match[0][:2])
+    match = re.search('[\d]{1,2}h', infname) # hours
+    if match:
+        print(match[0][:2])
+    exit() # TODO
+'''
+
+# the pcap report name is based on mac + pcaptimeframe/pcapname
 dirname = os.path.basename(args.mac) + "_" + os.path.basename(args.pcap) + "_" + "pcapreport"
 dir = os.path.join(dir, dirname)
 p = Path(dir)
@@ -126,7 +169,7 @@ p.mkdir(mode=0o755, parents=True, exist_ok=True)
 # run pcapgrok
 hostsfile = ''
 if args.hostsfile:
-    hostsfile = args.hostsfile
+    hostsfile = os.path.abspath(args.hostsfile)
 else:
     hostsfile = '/root/example_hostsfile'
 # run with MAC address restrictions per line in hostsfile
@@ -145,15 +188,6 @@ for line in f:
     pcapgrok(hostsfile, 2, pair)
 # run once without MAC address restrictions
 pcapgrok(args.hostsfile,2)
-
-# copy pcaps over for safekeeping
-for pcap in pcaplist:
-    cmd = []
-    cmd.append("cp")
-    cmd.append(pcap) # careful abs path vs relative
-    cmd.append(dir)
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr = subprocess.PIPE, shell=False)
-    p.wait()
 
 # regenerate home page
 cmd = []

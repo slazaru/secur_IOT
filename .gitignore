@@ -3,3 +3,4 @@ __pycache__/
 pcapGrok.log
 pcapgrok_dns_cache.xls
 pcapgrok*
+*.log
