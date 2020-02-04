@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import time
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
@@ -17,13 +19,11 @@ def run_tests(dir, id, debugFlag=False):
     omap.runAllTests(dir,ip,debugFlag)
     # regenerate home page
     cmd = []
-    cmd.append("python3")
-    cmd.append("/root/secur_iot/generate.py")
+    cmd.append("generate.py")
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr = subprocess.PIPE, shell=False)
     if p.stderr:
         for line in p.stderr:
             print(line)
-
 
 if __name__ == "__main__":
     os.chdir('/opt/zeek/logs/current')
