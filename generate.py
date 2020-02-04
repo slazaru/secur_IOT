@@ -81,7 +81,9 @@ for file in os.listdir(basepath): #grab attack script dirs
     attackstr += "<tr style=\"height:100%;\">"
     attackstr += "<th><p class=\"font-weight-bold\">" + file + "</p></th>"
     for el in os.listdir(os.path.join(basepath,file)):
-        attackstr += "<th><a href=\"./" + os.path.join(file, el) + "\">" + el + "</a></th>\n"
+        if ".html" in el:
+            attackstr += "<th><a href=\"./" + os.path.join(file, el) + "\">" + el + "</a></th>\n"
+    attackstr += "<th><a href=\"./" + file + "\">" + "Tests" + "</a></th>\n"
     attackstr+= "</tr>\n"
 attackstr += "</table>"
 
