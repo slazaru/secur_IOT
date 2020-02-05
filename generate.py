@@ -44,7 +44,7 @@ templatestr = '''
 </div>
 <br>
 <footer class="container-fluid text-center">
-  <p>Deploying An IoT Testbed Sam Lazarus 2020</p>
+  <p>Deploying An IoT Testbed</p>
 </footer>
 </body>
 </html>

@@ -19,7 +19,7 @@ from pathlib import Path
 from shutil import rmtree
 import re
 import pcap_period_extract
-from datetime import datetime
+from datetime import datetime, timedelta
 from time import localtime,time
 import dateutil
 from scapy.all import *
@@ -28,7 +28,7 @@ import pathlib
 
 parser = argparse.ArgumentParser(description='Pcap report generator')
 parser.add_argument('pcap', help='The pcap to process. Can be a single .pcap file or a timeinterval delineated with \'=\' (eg 2020-02-03-18:30:00=2020-02-03-19:00:00) or an amount of time, for example \'1h10m\' would be the last 1 hour and 10 minutes of pcaps captured on the testbed')
-parser.add_argument('mac', help='The mac address of the device under test')
+parser.add_argument('name', help='The the name of the test so you can identify it on the home page')
 parser.add_argument('-hf', '--hostsfile', help='The hostsfile to use. The hostsfile labels the nodes in the graphs produced. By default, the hostsfile in /root/exampe_hostsfile will be used')
 args = parser.parse_args()
 
@@ -135,7 +135,7 @@ def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
 
 # the pcap report dir is mac_pcaptimeframe/pcapname_pcapreport
 dir = os.path.join('/var/www/html/')
-dirname = os.path.basename(args.mac) + "_" + os.path.basename(args.pcap) + "_" + "pcapreport"
+dirname = os.path.basename(args.name) + "_" + os.path.basename(args.pcap) + "_" + "pcapreport"
 dir = os.path.join(dir, dirname)
 p = Path(dir)
 p.mkdir(mode=0o755, parents=True, exist_ok=True)
@@ -157,29 +157,39 @@ if ".pcap" in args.pcap: # single pcap
     p.wait()
     if p.stderr:
         for l in p.stderr: print(l)
+elif re.search('[\d]{1,3}m', args.pcap) or re.search('[\d]{1,3}h', args.pcap):
+    print("human time input detected")
+    # assume the user wants a "most recent" time interval
+    numminutes = 0
+    numhours = 0
+    match = re.search('[\d]{1,3}m', args.pcap) # minutes
+    if match:
+        numminutes = int(match[0][:-1])
+    match = re.search('[\d]{1,3}h', args.pcap) # hours
+    if match:
+        numhours = int(match[0][:-1])
+    print("got " + str(numminutes) + " minutes")
+    print("got " + str(numhours) + " hours")
+    # convert to timeinterval and then just do what the below block does
+    print(datetime.now())
+    print(type(datetime.now()))
+    currtime = datetime.now()
+    res = currtime - timedelta(hours=numhours, minutes=numminutes)
+    print("got time interval of " + str(res) + "=" + str(currtime))
+    ps = pcap_period_extract.pcapStore(pcapstoreLocation)
+    pcapLocation = os.path.join(dir, args.name + "_" + args.pcap + ".pcap")
+    ps.writePeriod(res, currtime, pcapLocation)
 else: # time interval separated by = eg 2020-02-03-18:30:00=2020-02-03-19:00:00
-    inputtype = "i" # time interval input
     interval = args.pcap.split('=')
     print("interval is " + str(interval))
     ps = pcap_period_extract.pcapStore(pcapstoreLocation)
     sdt = datetime.strptime(interval[0], FSDTFORMAT)
     edt = datetime.strptime(interval[1], FSDTFORMAT)
-    pcapLocation = os.path.join(dir, args.mac + "_" + args.pcap + ".pcap")
+    pcapLocation = os.path.join(dir, args.name + "_" + args.pcap + ".pcap")
     print("sdt is " + str(sdt))
     print("edt is " + str(edt))
     print("dest is " + pcapLocation)
     ps.writePeriod(sdt, edt, pcapLocation)
-'''
-if ".pcap" not in infname:
-    # assume the user wants a time interval instead
-    match = re.search('[\d]{1,2}m', infname) # minutes
-    if match:
-        print(match[0][:2])
-    match = re.search('[\d]{1,2}h', infname) # hours
-    if match:
-        print(match[0][:2])
-    exit() # TODO
-'''
 
 # run wordclouds
 wordclouds()
