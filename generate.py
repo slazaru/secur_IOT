@@ -74,7 +74,7 @@ for file in os.listdir(basepath): #grab pcapreport dirs
 resultstr += "</table>"
 
 # attack script reports
-attackstr = "<h4>Attack script reports</h4><br><table class=\"table\" border=\"0\">\n"
+attackstr = "<h4>Attack Reports</h4><br><table class=\"table\" border=\"0\">\n"
 for file in os.listdir(basepath): #grab attack script dirs
     if not os.path.isdir(os.path.join(basepath, file)): continue
     if "attack" not in file: continue

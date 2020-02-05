@@ -24,7 +24,7 @@ def runAllTests(directory, ipaddr, debugFlag=False):
     global reportFile
     reportFile = os.path.join(directory, "Report.html")
     reportf = open(reportFile, "w")
-    reportf.write("<html>\n")
+    reportf.write("<!DOCTYPE html>\n <html lang=\"en\">\n <head>\n <title>Attack Report</title>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <link rel=\"stylesheet\" href=\"../bootstrap.min.css\">\n </head>\n <body>\n")
     reportf.close()
     if debug: print("reportFile is " + reportFile)
     if debug: print("dir is " + dir)
@@ -37,8 +37,9 @@ def runAllTests(directory, ipaddr, debugFlag=False):
     getOSFromNmap()
     nmapDepthScan(1, 1000, 'tcp')
     nmapDepthScan(1, 1000, 'udp')
+    cameradar()
     reportf = open(reportFile, "a")
-    reportf.write("</html>\n")
+    reportf.write("</body>\n </html>\n")
     reportf.close()
     print("\nAll tests finished!\n")
 
@@ -91,6 +92,24 @@ def getOSFromTTL():
         outf.write("\nttl from ping suggests the OS is " + TTLOS)
     outf.close()
     appendToReport(os.path.join(dir, cfg.pingOSFile), cmd)
+
+def cameradar():
+    cmd = []
+    cmd.append("cameradar")
+    cmd.append("-t")
+    cmd.append(ip)
+    print("Running " + ' '.join(cmd))
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p.wait()
+    outf = open(os.path.join(dir, "cameradar"), "w")
+    for line in p.stdout:
+        outf.write(str(line.decode("utf-8")))
+        print(str(line.decode("utf-8")), flush=True)
+    for line in p.stderr:
+        outf.write(str(line.decode("utf-8")))
+        print(str(line.decode("utf-8")), flush=True)
+    outf.close()
+    appendToReport(os.path.join(dir, "cameradar"), cmd)
 
 def getOSFromNmap():
     cmd = []
