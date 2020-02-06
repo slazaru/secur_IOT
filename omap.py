@@ -262,7 +262,7 @@ def nmapDepthScan(lo, hi, service):
     prevf = os.path.join(dir, service + "_" + str(lo) + "-" + str(hi) + "_basic")
     if not os.path.exists(prevf):
         # havent performed a basic scan yet, do this before continuing
-        nmapBasicScan(dir, ip, lo, hi, service)
+        nmapBasicScan(lo, hi, service)
     if not os.path.exists(prevf):
         # wasn't able to extract any ports
         return

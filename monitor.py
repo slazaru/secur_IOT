@@ -32,23 +32,27 @@ if __name__ == "__main__":
     ignore_directories = False
     case_sensitive = True
     my_event_handler = PatternMatchingEventHandler(patterns, ignore_patterns, ignore_directories, case_sensitive)
-    # for testing vvv
+    # for testing vvv 
+'''
     dir = "/var/www/html/192.168.4.1_dc:a6:32:41:12:99_attack"
     id = "192.168.4.1_00:dc:a6:32:41:12:99"
     p = Path(dir)
     p.mkdir(mode=0o755, parents=True, exist_ok=True)
     run_tests(dir,id,True)
     exit()
+'''
     # testing ^^^
 
 def process_new_line():
-    if not os.path.isfile('/usr/local/zeek/logs/current/dhcp.log'):
+    if not os.path.isfile('/opt/zeek/logs/current/dhcp.log'):
+        print("process new line in monitor says not file")
         return
-    f = open('/usr/local/zeek/logs/current/dhcp.log', 'r')
+    f = open('/opt/zeek/logs/current/dhcp.log', 'r')
     lines = f.readlines()
     new_line = lines[-1]
-    vals = re.split(r'\t+', new_line)
-    id = vals[2] + "_" + vals[4]
+    vals = new_line.split()
+    print("values in dhcp.log: " + str(vals))
+    id = vals[8] + "_" + vals[4]
     dir = os.path.join('/var/www/html/', id + "_" + "attack")
     p = Path(dir)
     p.mkdir(mode=0o755, parents=True, exist_ok=True)
