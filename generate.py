@@ -66,9 +66,12 @@ for file in os.listdir(basepath): #grab pcapreport dirs
     resultstr += "<th><p class=\"font-weight-bold\">" + name[0] + "</p></th>"
     resultstr += "<th><p class=\"font-weight-bold\">" + name[1] + "</p></th>"
     for el in os.listdir(os.path.join(basepath,file)):
-        if ".html" in el:
+        if "zeek.html" in el:
+            resultstr += "<th><a href=\"./" + os.path.join(file, el) + "\">" + "Zeek Report" + "</a></th>\n"
+            #resultstr += "<th><a href=\"./" + os.path.join(file, "zeek") + "\">" + "Zeek Tests" + "</a></th>\n"
+        elif ".html" in el:
             resultstr += "<th><a href=\"./" + os.path.join(file, el) + "\">" + el[:-5] + "</a></th>\n"
-        if ".pcap" in el:
+        elif ".pcap" in el:
             resultstr += "<th><a href=\"./" + os.path.join(file, el) + "\">" + el.split(".")[1] + "</a></th>\n"
     resultstr+= "</tr>\n"
 resultstr += "</table>"

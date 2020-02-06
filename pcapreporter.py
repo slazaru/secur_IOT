@@ -43,7 +43,7 @@ def wordclouds():
     p.mkdir(mode=0o755, parents=True, exist_ok=True)
     cmd.append(newdir)
     print("Running " + " ".join(cmd))
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr = subprocess.PIPE, shell=False)
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
     p.wait()
     reportfname = os.path.join(dir, "wordclouds" + ".html")
     f = open(reportfname, "w")
@@ -98,7 +98,7 @@ def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
     else:
         cmd.append(".pdf")
     print("\nRunning " + " ".join(cmd))
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr = subprocess.PIPE, shell=False)
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
     p.wait()
     if restrictmac is not None:
         reportfname = os.path.join(dir, restrictmac[0] + ".html")
@@ -113,7 +113,7 @@ def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
         cmd.append(os.path.join(newdir, file))
         cmd.append("-png")
         print("running " + " ".join(cmd))
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr = subprocess.PIPE, shell=False)
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
         p.wait()
     f = open(reportfname, "w")
     f.write("<html>\n<table border=\"1\">\n")
@@ -191,6 +191,32 @@ else: # time interval separated by = eg 2020-02-03-18:30:00=2020-02-03-19:00:00
     print("dest is " + pcapLocation)
     ps.writePeriod(sdt, edt, pcapLocation)
 
+def zeek():
+    cmd = []
+    cmd.append("/opt/zeek/bin/zeek")
+    cmd.append("-r")
+    suffix = "zeek"
+    newdir = os.path.join(dir, suffix)
+    p = Path(newdir)
+    p.mkdir(mode=0o755, parents=True, exist_ok=True)
+    cmd.append(pcapLocation)
+    print("Running " + " ".join(cmd))
+    os.chdir(newdir)
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
+    p.wait()
+    reportf = open(os.path.join(dir, "zeek.html"), "w")
+    reportf.write("<!DOCTYPE html>\n <html lang=\"en\">\n <head>\n <title>Zeek Report</title>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <link rel=\"stylesheet\" href=\"../bootstrap.min.css\">\n </head>\n <body>\n")
+    for file in os.listdir(newdir):
+        if ".html" in file: continue # skip the report itself
+        reportf.write("<h3><a href=\"" + os.path.join(os.path.basename(newdir), file)  + "\">" + file + "</a></h3>\n")
+        f = open(file, "r")
+        for line in f:
+            reportf.write(line + "<br>")
+    reportf.write("</body>\n")
+
+# run zeek
+zeek()
+
 # run wordclouds
 wordclouds()
 
@@ -221,7 +247,7 @@ pcapgrok(args.hostsfile,2)
 cmd = []
 cmd.append("python3")
 cmd.append("/root/secur_IOT/generate.py")
-p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr = subprocess.PIPE, shell=False)
+p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
 if p.stderr:
     for line in p.stderr:
         print(line)
