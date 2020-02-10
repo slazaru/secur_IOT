@@ -143,7 +143,7 @@ p.mkdir(mode=0o755, parents=True, exist_ok=True)
 # if user specifies multiple pcaps, merge them together, put it in report
 # dir, and then use this merged pcap for processing
 inputtype = ''
-pcaplocation = ''
+pcapLocation = ''
 # determine type of pcap input
 if ".pcap" in args.pcap: # single pcap
     inputtype = "s" # single pcap input
@@ -151,8 +151,8 @@ if ".pcap" in args.pcap: # single pcap
     cmd = []
     cmd.append("cp")
     cmd.append(os.path.abspath(infname)) # careful abs path vs relative
-    pcaplocation = os.path.join(dir, infname)
-    cmd.append(pcaplocation)
+    pcapLocation = os.path.join(dir, infname)
+    cmd.append(pcapLocation)
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
     p.wait()
     if p.stderr:
