@@ -2,6 +2,7 @@
 
 import os
 import re
+from datetime import datetime
 
 basepath = '/var/www/html'
 templatestr = '''
@@ -56,7 +57,7 @@ templatestr = '''
 # pcap reports
 f = open(os.path.join(basepath, "index.html"), "w")
 resultstr = "<div class=\"page-header\">\n<h4>Pcap reports</h4>\n</div>\n<br><table class=\"table\" border=\"0\">\n"
-resultstr += "<thead>\n <tr>\n <th scope=\"col\">Date</th>\n <th scope=\"col\">Device</th>\n <th scope=\"col\">Report</th>\n <th scope=\"col\">Files</th>\n </tr>\n </thead>\n <tbody>\n"
+#resultstr += "<thead>\n <tr>\n <th scope=\"col\">Date</th>\n <th scope=\"col\">Device</th>\n <th scope=\"col\">Report</th>\n <th scope=\"col\">Files</th>\n </tr>\n </thead>\n <tbody>\n"
 for file in os.listdir(basepath): #grab pcapreport dirs
     if not os.path.isdir(os.path.join(basepath, file)): continue
     if "pcap" not in file: continue
@@ -82,7 +83,7 @@ for file in os.listdir(basepath): #grab attack script dirs
     if not os.path.isdir(os.path.join(basepath, file)): continue
     if "attack" not in file: continue # directories with "attack" in it are attack results
     attackstr += "<tr>\n"
-    attackstr += "<th scope=\"row\"><p class=\"font-weight-bold\">" + "DATE" + "</p></th>\n"
+    attackstr += "<th scope=\"row\"><p class=\"font-weight-bold\">" +  datetime.utcfromtimestamp(int(os.path.getmtime(os.path.join(basepath, file)))).strftime('%Y-%m-%d %H:%M:%S') + "</p></th>\n"
     attackstr += "<td><p class=\"font-weight-bold\">" + file + "</p></td>\n"
     for el in os.listdir(os.path.join(basepath,file)):
         if ".html" in el:
