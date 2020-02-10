@@ -57,22 +57,23 @@ templatestr = '''
 # pcap reports
 f = open(os.path.join(basepath, "index.html"), "w")
 resultstr = "<div class=\"page-header\">\n<h4>Pcap reports</h4>\n</div>\n<br><table class=\"table\" border=\"0\">\n"
-#resultstr += "<thead>\n <tr>\n <th scope=\"col\">Date</th>\n <th scope=\"col\">Device</th>\n <th scope=\"col\">Report</th>\n <th scope=\"col\">Files</th>\n </tr>\n </thead>\n <tbody>\n"
+resultstr += "<thead>\n <tr>\n <th scope=\"col\">Date</th>\n <th scope=\"col\">Test</th>\n <th scope=\"col\">Pcap</th>\n <th scope=\"col\">Reports</th>\n  </tr>\n </thead>\n <tbody>\n"
 for file in os.listdir(basepath): #grab pcapreport dirs
     if not os.path.isdir(os.path.join(basepath, file)): continue
     if "pcap" not in file: continue
     resultstr += "<tr style=\"height:100%;\">"
     name = file.split("_")
-    resultstr += "<th><p class=\"font-weight-bold\">" + name[0] + "</p></th>"
-    resultstr += "<th><p class=\"font-weight-bold\">" + name[1] + "</p></th>"
+    resultstr += "<th scope=\"row\"><p class=\"font-weight-bold\">" +  datetime.utcfromtimestamp(int(os.path.getmtime(os.path.join(basepath, file)))).strftime('%Y-%m-%d %H:%M:%S') + "</p></th>\n"
+    resultstr += "<td><p>" + name[0] + "</p></td>"
+    resultstr += "<td><p>" + name[1] + "</p></td>"
     for el in os.listdir(os.path.join(basepath,file)):
         if "zeek.html" in el:
-            resultstr += "<th><a href=\"./" + os.path.join(file, el) + "\">" + "Zeek Report" + "</a></th>\n"
+            resultstr += "<td><a href=\"./" + os.path.join(file, el) + "\">" + "Zeek Report" + "</a></td>\n"
             #resultstr += "<th><a href=\"./" + os.path.join(file, "zeek") + "\">" + "Zeek Tests" + "</a></th>\n"
         elif ".html" in el:
-            resultstr += "<th><a href=\"./" + os.path.join(file, el) + "\">" + el[:-5] + "</a></th>\n"
+            resultstr += "<td><a href=\"./" + os.path.join(file, el) + "\">" + el[:-5] + "</a></td>\n"
         elif ".pcap" in el:
-            resultstr += "<th><a href=\"./" + os.path.join(file, el) + "\">" + el.split(".")[1] + "</a></th>\n"
+            resultstr += "<td><a href=\"./" + os.path.join(file, el) + "\">" + el.split(".")[1] + "</a></td>\n"
     resultstr+= "</tr>\n"
 resultstr += "</table>"
 
