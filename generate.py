@@ -5,6 +5,7 @@ import re
 from datetime import datetime
 
 basepath = '/var/www/html'
+
 templatestr = '''
 <!DOCTYPE html>
 <html lang="en">
@@ -56,7 +57,7 @@ templatestr = '''
 
 # pcap reports
 f = open(os.path.join(basepath, "index.html"), "w")
-resultstr = "<div class=\"page-header\">\n<h4>Pcap reports</h4>\n</div>\n<br><table class=\"table\" border=\"0\">\n"
+resultstr = "<div class=\"page-header\">\n<h4>Pcap Reports</h4>\n</div>\n<br><table class=\"table\" border=\"0\">\n"
 resultstr += "<thead>\n <tr>\n <th scope=\"col\">Date</th>\n <th scope=\"col\">Test</th>\n <th scope=\"col\">Pcap</th>\n <th scope=\"col\">Reports</th>\n  </tr>\n </thead>\n <tbody>\n"
 for file in os.listdir(basepath): #grab pcapreport dirs
     if not os.path.isdir(os.path.join(basepath, file)): continue
