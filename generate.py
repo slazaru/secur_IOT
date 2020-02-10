@@ -15,7 +15,7 @@ templatestr = '''
 </head>
 <body>
 <nav class="navbar navbar-inverse">
-  <div class="container-fluid">
+  <div class="container">
     <div class="navbar-header">
       <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
         <span class="icon-bar"></span>
@@ -34,15 +34,13 @@ templatestr = '''
     </div>
   </div>
 </nav>
-<div class="container text-center">
-<h3>{0}</h3>
+<div class="container">
+<div class="page-header"><h3 style=\"font-weight:bold\">{0}</h3></div>
 <p>{1}</p>
-</div>
-<div class="container-fluid bg-3 text-center">
 {2}
 {3}
-</div>
 <br>
+</div>
 <footer class="container-fluid text-center">
   <p>Deploying An IoT Testbed</p>
 </footer>
@@ -57,7 +55,8 @@ templatestr = '''
 
 # pcap reports
 f = open(os.path.join(basepath, "index.html"), "w")
-resultstr = "<h4>Pcap reports</h4><br><table class=\"table\" border=\"0\">\n"
+resultstr = "<div class=\"page-header\">\n<h4>Pcap reports</h4>\n</div>\n<br><table class=\"table\" border=\"0\">\n"
+resultstr += "<thead>\n <tr>\n <th scope=\"col\">Date</th>\n <th scope=\"col\">Device</th>\n <th scope=\"col\">Report</th>\n <th scope=\"col\">Files</th>\n </tr>\n </thead>\n <tbody>\n"
 for file in os.listdir(basepath): #grab pcapreport dirs
     if not os.path.isdir(os.path.join(basepath, file)): continue
     if "pcap" not in file: continue
@@ -77,18 +76,20 @@ for file in os.listdir(basepath): #grab pcapreport dirs
 resultstr += "</table>"
 
 # attack script reports
-attackstr = "<h4>Attack Reports</h4><br><table class=\"table\" border=\"0\">\n"
+attackstr = "<div class=\"page-header\">\n<h4>Attack Reports</h4>\n</div><br><table class=\"table\" border=\"0\">\n"
+attackstr += "<thead>\n <tr>\n <th scope=\"col\">Date</th>\n <th scope=\"col\">Device</th>\n <th scope=\"col\">Report</th>\n <th scope=\"col\">Files</th>\n </tr>\n </thead>\n <tbody>\n"
 for file in os.listdir(basepath): #grab attack script dirs
     if not os.path.isdir(os.path.join(basepath, file)): continue
-    if "attack" not in file: continue
-    attackstr += "<tr style=\"height:100%;\">"
-    attackstr += "<th><p class=\"font-weight-bold\">" + file + "</p></th>"
+    if "attack" not in file: continue # directories with "attack" in it are attack results
+    attackstr += "<tr>\n"
+    attackstr += "<th scope=\"row\"><p class=\"font-weight-bold\">" + "DATE" + "</p></th>\n"
+    attackstr += "<td><p class=\"font-weight-bold\">" + file + "</p></td>\n"
     for el in os.listdir(os.path.join(basepath,file)):
         if ".html" in el:
-            attackstr += "<th><a href=\"./" + os.path.join(file, el) + "\">" + el + "</a></th>\n"
-    attackstr += "<th><a href=\"./" + file + "\">" + "Tests" + "</a></th>\n"
+            attackstr += "<td><a href=\"./" + os.path.join(file, el) + "\">" + el + "</a></td>\n"
+    attackstr += "<td><a href=\"./" + file + "\">" + "Tests" + "</a></td>\n"
     attackstr+= "</tr>\n"
-attackstr += "</table>"
+attackstr += "</tbody>\n </table>\n"
 
 f.write(templatestr.format('Results', '', resultstr, attackstr))
 f.close()
