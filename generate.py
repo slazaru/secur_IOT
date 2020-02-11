@@ -62,6 +62,7 @@ resultstr += "<thead>\n <tr>\n <th scope=\"col\">Date</th>\n <th scope=\"col\">T
 for file in os.listdir(basepath): #grab pcapreport dirs
     if not os.path.isdir(os.path.join(basepath, file)): continue
     if "pcap" not in file: continue
+    if len(os.listdir(os.path.join(basepath,file))) < 1: continue
     resultstr += "<tr style=\"height:100%;\">"
     name = file.split("_")
     resultstr += "<th scope=\"row\"><p class=\"font-weight-bold\">" +  datetime.utcfromtimestamp(int(os.path.getmtime(os.path.join(basepath, file)))).strftime('%Y-%m-%d %H:%M:%S') + "</p></th>\n"

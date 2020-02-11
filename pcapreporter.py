@@ -45,6 +45,11 @@ def wordclouds():
     print("Running " + " ".join(cmd))
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
     p.wait()
+    # the wordclouds report
+    for line in p.stdout:
+        print(line)
+    for line in p.stderr:
+        print(line)
     reportfname = os.path.join(dir, "wordclouds" + ".html")
     f = open(reportfname, "w")
     f.write("<html>\n<table border=\"1\">\n")
@@ -63,6 +68,22 @@ def wordclouds():
     print("\nreportfname : " + reportfname)
     print("\nnewdir : " + newdir)
     print("\nreport written to " + reportfname)
+    # the tshark files
+    reportf = open(os.path.join(dir, "tshark.html"), "w")
+    reportf.write("<!DOCTYPE html>\n <html lang=\"en\">\n <head>\n <title>Tshark Report</title>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <link rel=\"stylesheet\" href=\"../bootstrap.min.css\">\n </head>\n <body>\n")
+    os.chdir(newdir) 
+    for file in os.listdir(newdir):
+        if file[-3:] != "txt": #only grab tshark reports, which should be txt
+            continue
+        reportf.write("<h3><a href=\"" + os.path.join(os.path.basename(newdir), file)  + "\">" + file + "</a></h3>\n")
+        f = open(file, "r")
+        for line in f:
+            reportf.write(line + "<br>")
+        f.close()
+    reportf.write("</body>\n")
+    print("\nreportfname : " + "tshark.html")
+    print("\nnewdir : " + newdir)
+    print("\nreport written to " + os.path.join(dir, "tshark.html"))
 
 def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
     if restrictmac == None:
@@ -83,6 +104,7 @@ def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
     cmd.append("fdp")
     cmd.append("-s")
     cmd.append("box")
+    cmd.append("-S")
     if hf is not None:
         cmd.append("-hf")
         cmd.append(hf)
@@ -100,6 +122,10 @@ def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
     print("\nRunning " + " ".join(cmd))
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
     p.wait()
+    for line in p.stdout:
+        print(line)
+    for line in p.stderr:
+        print(line)
     if restrictmac is not None:
         reportfname = os.path.join(dir, restrictmac[0] + ".html")
     else:
@@ -115,6 +141,8 @@ def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
         print("running " + " ".join(cmd))
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
         p.wait()
+    print("number of items in dir:" + str(len(os.listdir(newdir))))
+    if len(os.listdir(newdir)) < 1: return
     f = open(reportfname, "w")
     f.write("<html>\n<table border=\"1\">\n")
     curr = 0
@@ -155,8 +183,10 @@ if ".pcap" in args.pcap: # single pcap
     cmd.append(pcapLocation)
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
     p.wait()
-    if p.stderr:
-        for l in p.stderr: print(l)
+    for line in p.stdout:
+        print(line)
+    for line in p.stderr:
+        print(line)
 elif re.search('[\d]{1,3}m', args.pcap) or re.search('[\d]{1,3}h', args.pcap):
     print("human time input detected")
     # assume the user wants a "most recent" time interval
@@ -204,6 +234,10 @@ def zeek():
     os.chdir(newdir)
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
     p.wait()
+    for line in p.stdout:
+        print(line)
+    for line in p.stderr:
+        print(line)
     reportf = open(os.path.join(dir, "zeek.html"), "w")
     reportf.write("<!DOCTYPE html>\n <html lang=\"en\">\n <head>\n <title>Zeek Report</title>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <link rel=\"stylesheet\" href=\"../bootstrap.min.css\">\n </head>\n <body>\n")
     for file in os.listdir(newdir):

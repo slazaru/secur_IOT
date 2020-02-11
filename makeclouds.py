@@ -356,14 +356,15 @@ def doTshark():
 	for i,com in enumerate(rclist):
 		ofn = "%s_%s.txt" % (rfnames[i],os.path.basename(infname))
 		cl = "tshark -q %s -r %s > %s" % (com,infname,ofn)
+		print("Running: " + cl)
 		os.system(cl)
 		pics.append(ofn)
 
 if __name__=="__main__":
 	seenIP,seenPORT,allIP,allPORT = readPcap(infname,{},{})
 	deens,pics = processPcap(seenIP,seenPORT,{})
-	writeIndex(pics)
-	#doTshark()
+	#writeIndex(pics)
+	doTshark()
 	if doGraphs:
 		viridis = cm.get_cmap('viridis', 12)
 		f = plt.figure(figsize=(10, 10))
@@ -392,6 +393,4 @@ if __name__=="__main__":
 		plt.title('Network of traffic between port numbers in %s' % os.path.basename(infname))
 		plt.savefig(outfn)
 		pics.append(outfn)
-	writeIndex(pics)
-
-
+	#writeIndex(pics)
