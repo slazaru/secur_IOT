@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 # coordinator for makeclouds and pcapgrok
+
 # location of pcapgrok main.py
 pcapgrokmain = "/root/pcapGrok/pcapGrok.py"
 # location of makeclouds.py
@@ -15,6 +16,8 @@ pcapstoreLocation = '/root/captures'
 zeekLocation = "/opt/zeek/bin/zeek"
 # location of zeek script to extract files
 fileExtractLocation = "/opt/zeek/share/zeek/policy/frameworks/files/extract-all-files.zeek"
+# location of html generator script
+generatorLocation = "/root/secur_IOT/generate.py"
 
 import argparse
 import os
@@ -279,6 +282,9 @@ zeek()
 # run wordclouds
 #wordclouds()
 
+# run tshark file extraction
+
+
 # run pcapgrok
 hostsfile = ''
 if args.hostsfile:
@@ -306,7 +312,7 @@ for line in f:
 # regenerate home page
 cmd = []
 cmd.append("python3")
-cmd.append("/root/secur_IOT/generate.py")
+cmd.append(generatorLocation)
 p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
 if p.stderr:
     for line in p.stderr:
