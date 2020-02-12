@@ -5,12 +5,16 @@
 pcapgrokmain = "/root/pcapGrok/pcapGrok.py"
 # location of makeclouds.py
 makeclouds = "/root/secur_IOT/makeclouds.py"
-# columns in reports
+# columns in pcapgrok pdf reports
 cols = 3
 # date format for interval input
 FSDTFORMAT = '%Y-%m-%d-%H:%M:%S'
 # pcapstore location
 pcapstoreLocation = '/root/captures'
+# zeek binary location
+zeekLocation = "/opt/zeek/bin/zeek"
+# location of zeek script to extract files
+fileExtractLocation = "/opt/zeek/share/zeek/policy/frameworks/files/extract-all-files.zeek"
 
 import argparse
 import os
@@ -214,15 +218,17 @@ else: # time interval separated by = eg 2020-02-03-18:30:00=2020-02-03-19:00:00
     pcapLocation = os.path.join(dir, args.name + "_" + args.pcap + ".pcap")
     ps.writePeriod(sdt, edt, pcapLocation)
 
+# run zeek with pcap input and spit out the files in a dir called "zeek"
 def zeek():
     cmd = []
-    cmd.append("/opt/zeek/bin/zeek")
+    cmd.append(zeekLocation)
     cmd.append("-r")
     suffix = "zeek"
     newdir = os.path.join(dir, suffix)
     p = Path(newdir)
     p.mkdir(mode=0o755, parents=True, exist_ok=True)
     cmd.append(pcapLocation)
+    cmd.append(fileExtractLocation)
     print("Running " + " ".join(cmd))
     os.chdir(newdir)
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
@@ -231,13 +237,14 @@ def zeek():
         print(line)
     for line in p.stderr:
         print(line)
+    # write the zeek logs report
     reportf = open(os.path.join(dir, "zeek.html"), "w")
     reportf.write("<!DOCTYPE html>\n <html lang=\"en\">\n <head>\n <title>Zeek Report</title>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <link rel=\"stylesheet\" href=\"../bootstrap.min.css\">\n </head>\n <body>\n")
     for file in os.listdir(newdir):
         if ".html" in file: continue # skip the report itself
+        if "extract" in file: continue # skip the extract files dir
         reportf.write("<h3><a href=\"" + os.path.join(os.path.basename(newdir), file)  + "\">" + file + "</a></h3>\n")
         f = open(file, "r")
-        print("file: " + file)
         if "conn" in file: #conn.log is big, dont display it in a table
             continue
         reportf.write("<table class=\"table table-striped\">\n <tbody>\n ")
@@ -246,23 +253,27 @@ def zeek():
         for line in f:
             line = line.split()
             if len(line) > max: max = len(line)
-        print("max: " + str(max))
         f.close()
         f = open(file, "r")
-        for line in f:
+        for i,line in enumerate(f):
             line = line.split() # tab separated log file
-            print("len(line): " + str(len(line)))
-            if len(line) != max-1 and len(line) != max: continue 
+            if len(line) != max-1 and len(line) != max: continue  # skip lines with junk
             reportf.write("<tr>\n")
-            for el in line:
+            for j,el in enumerate(line):
                 if el[0] == '#': # without this, table with be misaligned
                     continue
-                reportf.write("<td>\n " + el + "</td>\n")
+                # the 8th slot is the mime, the 22nd slot in the file name
+                if "files.log" in file and j == 8 and "analyzers" not in line[8] and "set[string]" not in line[8]: # hack to select the right elements
+                    # make a link to the actual file
+                    #print("mime: " + line[8])
+                    #print("filename: " + line[22])
+                    reportf.write("<td>\n <a href=\"" + "./zeek/extract_files/" + line[22] + "\">" + line[8] + "</a>\n </td>\n")
+                else:
+                    reportf.write("<td>\n " + el + "</td>\n")
             reportf.write("</tr>\n")
         reportf.write("</tbody>\n </table>\n")
     reportf.write("</body>\n")
 
-# run zeek
 zeek()
 
 # run wordclouds

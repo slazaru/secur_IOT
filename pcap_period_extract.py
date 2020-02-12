@@ -38,7 +38,7 @@ class pcapStore():
 		for dirName, subdirList, fileList in os.walk(self.pcapsFolder):	
 			for pfn in fileList:
 				fs = pfn.split('_') # assume name works this way...
-				print(str(fs))
+				#print(str(fs))
 				if len(fs) == 2:
 					fn = fs[1] 
 					ppath = os.path.join(dirName, pfn)
@@ -50,11 +50,17 @@ class pcapStore():
 					except:
 						logging.warning('Found pcap file name %s in path %s - expected %s preceded by an underscore - ignoring' % (pfn,self.pcapsFolder,FSDTFORMAT))
 		pcapinfo.sort()
+		#print("sorted pcap times: ")
+		#for el in pcapinfo:
+		#	print(el)
 		self.pcapfnames = [x[1] for x in pcapinfo]
 		self.pcaptds = [x[0] for x in pcapinfo]
 		
 		
 	def writePeriod(self,sdt,edt,pcapdest):
+		# reset the pcapfile if it already exists
+		resetf = open(pcapdest, "w")
+		resetf.close()
 		"""write packets in a datetime window into pcapdest as pcap
 		"""
 		self.readFolder() # in case any new ones since we started running
@@ -67,8 +73,12 @@ class pcapStore():
 		except:
 			logging.warning('##Problem with start and end datetimes in writePeriod - %s and %s - expected datetimes' % (sdt,edt))
 			return False
-		firstfi = bisect.bisect_left(self.pcaptds,int(sdtt))
-		lastfi = min(bisect.bisect_right(self.pcaptds,int(edtt)) + 1, len(self.pcaptds)-1)
+		firstfi = bisect.bisect_left(self.pcaptds,int(sdtt)) - 1
+		lastfi = min(bisect.bisect_right(self.pcaptds,int(edtt)+ 1),len(self.pcaptds)-1)
+		if firstfi < 0: firstfi = 0
+		#print("firstfi: " + str(firstfi))
+		#print("lastfi: " + str(lastfi))
+		#print("len(self.pcapfnames): " + str(len(self.pcapfnames)))
 		acted = False
 		npkt = 0
 		for fnum in range(firstfi, lastfi):
