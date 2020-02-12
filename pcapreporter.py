@@ -198,14 +198,10 @@ elif re.search('[\d]{1,3}m', args.pcap) or re.search('[\d]{1,3}h', args.pcap):
     match = re.search('[\d]{1,3}h', args.pcap) # hours
     if match:
         numhours = int(match[0][:-1])
-    print("got " + str(numminutes) + " minutes")
-    print("got " + str(numhours) + " hours")
     # convert to timeinterval and then just do what the below block does
-    print(datetime.now())
-    print(type(datetime.now()))
     currtime = datetime.now()
     res = currtime - timedelta(hours=numhours, minutes=numminutes)
-    print("got time interval of " + str(res) + "=" + str(currtime))
+    print("interval is " + str(res) + "=" + str(currtime))
     ps = pcap_period_extract.pcapStore(pcapstoreLocation)
     pcapLocation = os.path.join(dir, args.name + "_" + args.pcap + ".pcap")
     ps.writePeriod(res, currtime, pcapLocation)
@@ -216,9 +212,6 @@ else: # time interval separated by = eg 2020-02-03-18:30:00=2020-02-03-19:00:00
     sdt = datetime.strptime(interval[0], FSDTFORMAT)
     edt = datetime.strptime(interval[1], FSDTFORMAT)
     pcapLocation = os.path.join(dir, args.name + "_" + args.pcap + ".pcap")
-    print("sdt is " + str(sdt))
-    print("edt is " + str(edt))
-    print("dest is " + pcapLocation)
     ps.writePeriod(sdt, edt, pcapLocation)
 
 def zeek():
@@ -244,15 +237,36 @@ def zeek():
         if ".html" in file: continue # skip the report itself
         reportf.write("<h3><a href=\"" + os.path.join(os.path.basename(newdir), file)  + "\">" + file + "</a></h3>\n")
         f = open(file, "r")
+        print("file: " + file)
+        if "conn" in file: #conn.log is big, dont display it in a table
+            continue
+        reportf.write("<table class=\"table table-striped\">\n <tbody>\n ")
+        #hack to figure out table width
+        max = 0
         for line in f:
-            reportf.write(line + "<br>")
+            line = line.split()
+            if len(line) > max: max = len(line)
+        print("max: " + str(max))
+        f.close()
+        f = open(file, "r")
+        for line in f:
+            line = line.split() # tab separated log file
+            print("len(line): " + str(len(line)))
+            if len(line) != max-1 and len(line) != max: continue 
+            reportf.write("<tr>\n")
+            for el in line:
+                if el[0] == '#': # without this, table with be misaligned
+                    continue
+                reportf.write("<td>\n " + el + "</td>\n")
+            reportf.write("</tr>\n")
+        reportf.write("</tbody>\n </table>\n")
     reportf.write("</body>\n")
 
 # run zeek
 zeek()
 
 # run wordclouds
-wordclouds()
+#wordclouds()
 
 # run pcapgrok
 hostsfile = ''
@@ -263,6 +277,7 @@ else:
 # run with MAC address restrictions per line in hostsfile
 f = open(os.path.abspath(hostsfile), 'r')
 for line in f:
+    continue #debug
     line = line.split(',')
     if line[0] == 'ip':
         continue # skip header line
@@ -275,7 +290,7 @@ for line in f:
     pair = (name, macaddr)
     pcapgrok(hostsfile, 2, pair)
 # run once without MAC address restrictions
-pcapgrok(args.hostsfile,2)
+#pcapgrok(args.hostsfile,2)
 
 # regenerate home page
 cmd = []

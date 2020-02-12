@@ -72,8 +72,17 @@ class pcapStore():
 		acted = False
 		npkt = 0
 		for fnum in range(firstfi, lastfi):
+			#print("fnum : " + str(fnum))
+			#print("firstfi: "  + str(firstfi))
+			#print("lastfi: " + str(lastfi))
 			rdfname = self.pcapfnames[fnum]
+			#print("rdfname: " + str(rdfname))
 			pin = rdpcap(rdfname)
+			if len(pin) == 0: # no packets, early exit
+				continue
+			#print("len of pin: " + str(len(pin)))
+			#for el in pin:
+				#print("got time in el of: " + str(el.time))
 			mint = min([x.time for x in pin])
 			maxt = max([x.time for x in pin])
 			print('file',rdfname,'has min',mint,'max',maxt)
