@@ -6,6 +6,8 @@
 pcapgrokmain = "/root/pcapGrok/pcapGrok.py"
 # location of makeclouds.py
 makeclouds = "/root/secur_IOT/makeclouds.py"
+# location of tshark.py
+tsharkLocation = "/root/secur_IOT/tshark.py"
 # columns in pcapgrok pdf reports
 cols = 3
 # date format for interval input
@@ -75,22 +77,6 @@ def wordclouds():
     print("\nreportfname : " + reportfname)
     print("\nnewdir : " + newdir)
     print("\nreport written to " + reportfname)
-    # the tshark files
-    reportf = open(os.path.join(dir, "tshark.html"), "w")
-    reportf.write("<!DOCTYPE html>\n <html lang=\"en\">\n <head>\n <title>Tshark Report</title>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <link rel=\"stylesheet\" href=\"../bootstrap.min.css\">\n </head>\n <body>\n")
-    os.chdir(newdir) 
-    for file in os.listdir(newdir):
-        if file[-3:] != "txt": #only grab tshark reports, which should be txt
-            continue
-        reportf.write("<h3><a href=\"" + os.path.join(os.path.basename(newdir), file)  + "\">" + file + "</a></h3>\n")
-        f = open(file, "r")
-        for line in f:
-            reportf.write(line + "<br>")
-        f.close()
-    reportf.write("</body>\n")
-    print("\nreportfname : " + "tshark.html")
-    print("\nnewdir : " + newdir)
-    print("\nreport written to " + os.path.join(dir, "tshark.html"))
 
 def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
     if restrictmac == None:
@@ -168,6 +154,75 @@ def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
     print("\nnewdir : " + newdir)
     print("\nreport written to " + reportfname)
 
+# run zeek with pcap input and spit out the files in a dir called "zeek"
+def zeek():
+    cmd = []
+    cmd.append(zeekLocation)
+    cmd.append("-Cr")
+    suffix = "zeek"
+    newdir = os.path.join(dir, suffix)
+    p = Path(newdir)
+    p.mkdir(mode=0o755, parents=True, exist_ok=True)
+    cmd.append(pcapLocation)
+    cmd.append(fileExtractLocation)
+    print("Running " + " ".join(cmd))
+    os.chdir(newdir)
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
+    p.wait()
+    for line in p.stdout:
+        print(line)
+    for line in p.stderr:
+        print(line)
+    # write the zeek logs report
+    reportf = open(os.path.join(dir, "zeek.html"), "w")
+    reportf.write("<!DOCTYPE html>\n <html lang=\"en\">\n <head>\n <title>Zeek Report</title>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <link rel=\"stylesheet\" href=\"../bootstrap.min.css\">\n </head>\n <body>\n")
+    for file in os.listdir(newdir):
+        if ".html" in file: continue # skip the report itself
+        if "extract" in file: continue # skip the extract files dir
+        reportf.write("<h3><a href=\"" + os.path.join(os.path.basename(newdir), file)  + "\">" + file + "</a></h3>\n")
+        f = open(file, "r")
+        if "conn" in file: #conn.log is big, dont display it in a table
+            continue
+        reportf.write("<table class=\"table table-striped\">\n <tbody>\n ")
+        #hack to figure out table width
+        max = 0
+        for line in f:
+            line = line.split()
+            if len(line) > max: max = len(line)
+        f.close()
+        f = open(file, "r")
+        for i,line in enumerate(f):
+            line = line.split() # tab separated log file
+            if len(line) != max-1 and len(line) != max: continue  # skip lines with junk
+            reportf.write("<tr>\n")
+            for j,el in enumerate(line):
+                if el[0] == '#': # without this, table with be misaligned
+                    continue
+                # the 8th slot is the mime, the 22nd slot in the file name
+                if "files.log" in file and j == 8 and "analyzers" not in line[8] and "set[string]" not in line[8]: # hack to select the right elements
+                    # make a link to the actual file
+                    #print("mime: " + line[8])
+                    #print("filename: " + line[22])
+                    reportf.write("<td>\n <a href=\"" + "./zeek/extract_files/" + line[22] + "\">" + line[8] + "</a>\n </td>\n")
+                else:
+                    reportf.write("<td>\n " + el + "</td>\n")
+            reportf.write("</tr>\n")
+        reportf.write("</tbody>\n </table>\n")
+    reportf.write("</body>\n")
+
+def tshark():
+    # interface for tshark.py: tshark.py [pcap] [dir to put report in]
+    cmd = []
+    cmd.append(pcapLocation)
+    cmd.append(dir)
+    print("Running " + " ".join(cmd))
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
+    p.wait()
+    for line in p.stdout:
+        print(line)
+    for line in p.stderr:
+        print(line)
+
 # the pcap report dir is mac_pcaptimeframe/pcapname_pcapreport
 dir = os.path.join('/var/www/html/')
 dirname = os.path.basename(args.name) + "_" + os.path.basename(args.pcap) + "_" + "pcapreport"
@@ -221,69 +276,14 @@ else: # time interval separated by = eg 2020-02-03-18:30:00=2020-02-03-19:00:00
     pcapLocation = os.path.join(dir, args.name + "_" + args.pcap + ".pcap")
     ps.writePeriod(sdt, edt, pcapLocation)
 
-# run zeek with pcap input and spit out the files in a dir called "zeek"
-def zeek():
-    cmd = []
-    cmd.append(zeekLocation)
-    cmd.append("-r")
-    suffix = "zeek"
-    newdir = os.path.join(dir, suffix)
-    p = Path(newdir)
-    p.mkdir(mode=0o755, parents=True, exist_ok=True)
-    cmd.append(pcapLocation)
-    cmd.append(fileExtractLocation)
-    print("Running " + " ".join(cmd))
-    os.chdir(newdir)
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
-    p.wait()
-    for line in p.stdout:
-        print(line)
-    for line in p.stderr:
-        print(line)
-    # write the zeek logs report
-    reportf = open(os.path.join(dir, "zeek.html"), "w")
-    reportf.write("<!DOCTYPE html>\n <html lang=\"en\">\n <head>\n <title>Zeek Report</title>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <link rel=\"stylesheet\" href=\"../bootstrap.min.css\">\n </head>\n <body>\n")
-    for file in os.listdir(newdir):
-        if ".html" in file: continue # skip the report itself
-        if "extract" in file: continue # skip the extract files dir
-        reportf.write("<h3><a href=\"" + os.path.join(os.path.basename(newdir), file)  + "\">" + file + "</a></h3>\n")
-        f = open(file, "r")
-        if "conn" in file: #conn.log is big, dont display it in a table
-            continue
-        reportf.write("<table class=\"table table-striped\">\n <tbody>\n ")
-        #hack to figure out table width
-        max = 0
-        for line in f:
-            line = line.split()
-            if len(line) > max: max = len(line)
-        f.close()
-        f = open(file, "r")
-        for i,line in enumerate(f):
-            line = line.split() # tab separated log file
-            if len(line) != max-1 and len(line) != max: continue  # skip lines with junk
-            reportf.write("<tr>\n")
-            for j,el in enumerate(line):
-                if el[0] == '#': # without this, table with be misaligned
-                    continue
-                # the 8th slot is the mime, the 22nd slot in the file name
-                if "files.log" in file and j == 8 and "analyzers" not in line[8] and "set[string]" not in line[8]: # hack to select the right elements
-                    # make a link to the actual file
-                    #print("mime: " + line[8])
-                    #print("filename: " + line[22])
-                    reportf.write("<td>\n <a href=\"" + "./zeek/extract_files/" + line[22] + "\">" + line[8] + "</a>\n </td>\n")
-                else:
-                    reportf.write("<td>\n " + el + "</td>\n")
-            reportf.write("</tr>\n")
-        reportf.write("</tbody>\n </table>\n")
-    reportf.write("</body>\n")
-
-zeek()
+# run zeek
+#zeek()
 
 # run wordclouds
 #wordclouds()
 
 # run tshark file extraction
-
+tshark()
 
 # run pcapgrok
 hostsfile = ''
