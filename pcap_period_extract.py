@@ -95,7 +95,7 @@ class pcapStore():
 				#print("got time in el of: " + str(el.time))
 			mint = min([x.time for x in pin])
 			maxt = max([x.time for x in pin])
-			print('file',rdfname,'has min',mint,'max',maxt)
+			#print('file',rdfname,'has min',mint,'max',maxt)
 			pin = [x for x in pin if int(x.time) >= sdtt and int(x.time) <= edtt] # gotta love scapy 
 			if len(pin) > 0:
 				npkt += len(pin)

@@ -116,9 +116,9 @@ def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
     p.wait()
     for line in p.stdout:
-        print(line)
+        print(line.decode('ascii'))
     for line in p.stderr:
-        print(line)
+        print(line.decode('ascii'))
     if restrictmac is not None:
         reportfname = os.path.join(dir, restrictmac[0] + ".html")
     else:
@@ -134,8 +134,8 @@ def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
         print("running " + " ".join(cmd))
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
         p.wait()
-    print("number of items in dir:" + str(len(os.listdir(newdir))))
-    if len(os.listdir(newdir)) < 1: return
+    #print("number of items in dir:" + str(len(os.listdir(newdir))))
+    if len(os.listdir(newdir)) < 2: return # pcapgrok has logs in cwd ..
     f = open(reportfname, "w")
     f.write("<html>\n<table border=\"1\">\n")
     curr = 0
@@ -184,16 +184,10 @@ def zeek():
         if "conn" in file: #conn.log is big, dont display it in a table
             continue
         reportf.write("<table class=\"table table-striped\">\n <tbody>\n ")
-        #hack to figure out table width
-        max = 0
-        for line in f:
-            line = line.split()
-            if len(line) > max: max = len(line)
         f.close()
         f = open(file, "r")
         for i,line in enumerate(f):
             line = line.split() # tab separated log file
-            if len(line) != max-1 and len(line) != max: continue  # skip lines with junk
             reportf.write("<tr>\n")
             for j,el in enumerate(line):
                 if el[0] == '#': # without this, table with be misaligned
@@ -213,15 +207,13 @@ def zeek():
 def tshark():
     # interface for tshark.py: tshark.py [pcap] [dir to put report in]
     cmd = []
+    cmd.append(tsharkLocation)
     cmd.append(pcapLocation)
     cmd.append(dir)
     print("Running " + " ".join(cmd))
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
-    p.wait()
-    for line in p.stdout:
-        print(line)
-    for line in p.stderr:
-        print(line)
+    res = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+    for el in res:
+        print(el.decode('utf-8'))
 
 # the pcap report dir is mac_pcaptimeframe/pcapname_pcapreport
 dir = os.path.join('/var/www/html/')
@@ -277,10 +269,10 @@ else: # time interval separated by = eg 2020-02-03-18:30:00=2020-02-03-19:00:00
     ps.writePeriod(sdt, edt, pcapLocation)
 
 # run zeek
-#zeek()
+zeek()
 
 # run wordclouds
-#wordclouds()
+wordclouds()
 
 # run tshark file extraction
 tshark()
@@ -294,7 +286,6 @@ else:
 # run with MAC address restrictions per line in hostsfile
 f = open(os.path.abspath(hostsfile), 'r')
 for line in f:
-    continue #debug
     line = line.split(',')
     if line[0] == 'ip':
         continue # skip header line
@@ -307,7 +298,7 @@ for line in f:
     pair = (name, macaddr)
     pcapgrok(hostsfile, 2, pair)
 # run once without MAC address restrictions
-#pcapgrok(args.hostsfile,2)
+pcapgrok(args.hostsfile,2)
 
 # regenerate home page
 cmd = []

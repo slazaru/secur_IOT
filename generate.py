@@ -67,16 +67,18 @@ for file in os.listdir(basepath): #grab pcapreport dirs
     name = file.split("_")
     resultstr += "<th scope=\"row\"><p class=\"font-weight-bold\">" +  datetime.utcfromtimestamp(int(os.path.getmtime(os.path.join(basepath, file)))).strftime('%Y-%m-%d %H:%M:%S') + "</p></th>\n"
     resultstr += "<td><p>" + name[0] + "</p></td>"
-    # get the pcap
+    # get the pcap file first
     for el in os.listdir(os.path.join(basepath,file)):
         if ".pcap" in el:
             resultstr += "<td><a href=\"./" + os.path.join(file, el) + "\">" + el + "</a></td>\n"
+    # found a pcapreport dir, search for reports
     for el in os.listdir(os.path.join(basepath,file)):
         if "zeek.html" in el:
             resultstr += "<td><a href=\"./" + os.path.join(file, el) + "\">" + "Zeek Report" + "</a></td>\n"
-            #resultstr += "<th><a href=\"./" + os.path.join(file, "zeek") + "\">" + "Zeek Tests" + "</a></th>\n"
         elif ".html" in el:
             resultstr += "<td><a href=\"./" + os.path.join(file, el) + "\">" + el[:-5] + "</a></td>\n"
+        elif "tshark_files" in el: # the tshark file carving dir
+            resultstr += "<td><a href=\"./" + os.path.join(file, el) + "\">" + el + "</a></td>\n"
     resultstr+= "</tr>\n"
 resultstr += "</table>"
 
