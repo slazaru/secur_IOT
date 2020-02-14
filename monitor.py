@@ -10,6 +10,7 @@ import subprocess
 import omap
 
 dhcplogDir = "/opt/zeek/logs/current"
+htmlRoot = "/var/www/html"
 
 def run_tests(dir, id, debugFlag=False):
     ip = id.split('_')[0]
@@ -36,7 +37,7 @@ if __name__ == "__main__":
     my_event_handler = PatternMatchingEventHandler(patterns, ignore_patterns, ignore_directories, case_sensitive)
     # for testing vvv 
 '''
-    dir = "/var/www/html/192.168.4.1_dc:a6:32:41:12:99_attack"
+    dir = os.path.join(htmlRoot, "192.168.4.1_dc:a6:32:41:12:99_attack")
     id = "192.168.4.1_00:dc:a6:32:41:12:99"
     p = Path(dir)
     p.mkdir(mode=0o755, parents=True, exist_ok=True)
@@ -60,7 +61,7 @@ def process_new_line():
     vals = new_line.split()
     #print("values in dhcp.log: " + str(vals))
     id = vals[8] + "_" + vals[4]
-    dir = os.path.join('/var/www/html/', id + "_" + "attack")
+    dir = os.path.join(htmlRoot, id + "_" + "attack")
     p = Path(dir)
     p.mkdir(mode=0o755, parents=True, exist_ok=True)
     run_tests(dir, id)

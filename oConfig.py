@@ -8,7 +8,7 @@ timing = '-T5'
 includeFiltered = False
 nmapOSFile = "OS_from_nmap"
 maxRTT = "500ms"
-minRate = "500"
+minRate = "1000"
 
 # wfuzz
 wfuzzExtensions1 = "/usr/share/wordlists/extensions.txt"
