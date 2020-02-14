@@ -4,8 +4,6 @@
 
 # location of pcapgrok main.py
 pcapgrokmain = "/root/pcapGrok/pcapGrok.py"
-# location of makeclouds.py
-makeclouds = "/root/secur_IOT/makeclouds.py"
 # location of tshark.py
 tsharkLocation = "/root/secur_IOT/tshark.py"
 # columns in pcapgrok pdf reports
@@ -41,43 +39,6 @@ parser.add_argument('name', help='The the name of the test so you can identify i
 parser.add_argument('-hf', '--hostsfile', help='The hostsfile to use. The hostsfile labels the nodes in the graphs produced. By default, the hostsfile in /root/exampe_hostsfile will be used')
 args = parser.parse_args()
 
-def wordclouds():
-    cmd = []
-    cmd.append("python3")
-    cmd.append(makeclouds)
-    cmd.append(pcapLocation)
-    suffix = "wordclouds"
-    newdir = os.path.join(dir, "wordclouds")
-    p = Path(newdir)
-    p.mkdir(mode=0o755, parents=True, exist_ok=True)
-    cmd.append(newdir)
-    print("Running " + " ".join(cmd))
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
-    p.wait()
-    # the wordclouds report
-    for line in p.stdout:
-        print(line)
-    for line in p.stderr:
-        print(line)
-    reportfname = os.path.join(dir, "wordclouds" + ".html")
-    f = open(reportfname, "w")
-    f.write("<html>\n<table border=\"1\">\n")
-    curr = 0
-    for file in os.listdir(newdir):
-        if file[-3:] != "png": #only grab pdfs
-            continue
-        if curr == 0:
-            f.write("<tr style=\"height:100%;\">\n")
-        f.write("<th><a href=\"" + os.path.join(suffix,file) + "\"><img src=\"" + os.path.join(suffix,file) + "\" style=\"width:100%;\"></a></th>")
-        curr = curr +1
-        if curr % cols == 0:
-            curr = 0
-    f.write("</table>\n</html>")
-    f.close()
-    print("\nreportfname : " + reportfname)
-    print("\nnewdir : " + newdir)
-    print("\nreport written to " + reportfname)
-
 def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
     if restrictmac == None:
         suffix = "AllDevices"
@@ -97,7 +58,7 @@ def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
     cmd.append("fdp")
     cmd.append("-s")
     cmd.append("box")
-    cmd.append("-S")
+    #cmd.append("-S") -S argument disables port squishing
     if hf is not None:
         cmd.append("-hf")
         cmd.append(hf)
@@ -270,9 +231,6 @@ else: # time interval separated by = eg 2020-02-03-18:30:00=2020-02-03-19:00:00
 
 # run zeek
 zeek()
-
-# run wordclouds
-wordclouds()
 
 # run tshark file extraction
 tshark()
