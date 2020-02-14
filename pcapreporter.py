@@ -11,7 +11,7 @@ cols = 3
 # date format for interval input
 FSDTFORMAT = '%Y-%m-%d-%H:%M:%S'
 # pcapstore location
-pcapstoreLocation = '/root/captures'
+pcapstoreLocation = '/captures'
 # zeek binary location
 zeekLocation = "/opt/zeek/bin/zeek"
 # location of zeek script to extract files
