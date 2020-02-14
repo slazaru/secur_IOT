@@ -86,8 +86,11 @@ class pcapStore():
 			#print("firstfi: "  + str(firstfi))
 			#print("lastfi: " + str(lastfi))
 			rdfname = self.pcapfnames[fnum]
-			#print("rdfname: " + str(rdfname))
-			pin = rdpcap(rdfname)
+			print("rdfname: " + str(rdfname))
+			try:
+				pin = rdpcap(rdfname)
+			except:
+				continue
 			if len(pin) == 0: # no packets, early exit
 				continue
 			#print("len of pin: " + str(len(pin)))
