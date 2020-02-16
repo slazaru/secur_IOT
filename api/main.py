@@ -1,3 +1,4 @@
+import uvicorn
 from fastapi import FastAPI, File, UploadFile
 import os
 import subprocess
@@ -50,7 +51,7 @@ async def pcapreporter(pcap: str="30m", name: str="UnnamedTest"):
         cmd.append(pcap)
         cmd.append(name)
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        p.wait()
+        #p.wait()
         return {"message": "success"}
     except:
         return {"message": "failure"}
@@ -64,8 +65,12 @@ async def attack(ip: str):
         cmd.append("attack.py")
         cmd.append(ip)
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        p.wait()
+        #p.wait()
         return {"message": "success"}
     except Exception as e:
         print(e)
         return {"message": "failure"}
+
+# https://www.uvicorn.org/deployment/
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, log_level="info")
