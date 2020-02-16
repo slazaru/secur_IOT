@@ -5,6 +5,7 @@ import re
 from datetime import datetime
 
 basepath = '/var/www/html'
+apipath = "http://localhost:8000"
 
 templatestr = '''
 <!DOCTYPE html>
@@ -29,8 +30,9 @@ templatestr = '''
     <div class="collapse navbar-collapse" id="myNavbar">
       <ul class="nav navbar-nav">
         <li><a href="index.html">Results</a></li>
-        <li><a href="about.html">About</a></li>
-        <li><a href="help.html">Help</a></li>
+        <li><a href="upload.html">Upload</a></li>
+        <li><a href="attack.html">Attack</a></li>
+        <li><a href="pcapreporter.html">Pcapreporter</a></li>
         <li><a href="https://github.com/slazaru/iottestbed">Git</a></li>
       </ul>
     </div>
@@ -102,12 +104,51 @@ f.write(templatestr.format('Results', '', resultstr, attackstr))
 f.close()
 
 # about page
-f = open(os.path.join(basepath, "about.html"), "w")
-f.write(templatestr.format('About', 'A testbed for IoT devices', '', ''))
-f.close()
+#f = open(os.path.join(basepath, "about.html"), "w")
+#f.write(templatestr.format('About', 'A testbed for IoT devices', '', ''))
+#f.close()
 
 # help page
-f = open(os.path.join(basepath, "help.html"), "w")
-f.write(templatestr.format('Help', 'The best way to get help is to follow the instructions on the git page', '', ''))
+#f = open(os.path.join(basepath, "help.html"), "w")
+#f.write(templatestr.format('Help', 'The best way to get help is to follow the instructions on the git page', '', ''))
+#f.close()
+
+# upload page
+f = open(os.path.join(basepath, "upload.html"), "w")
+uploadForm = '''
+<form action="http://localhost:8000/api/upload_pcap/" method="post" enctype="multipart/form-data">
+    <input type="file" name="file" id="file">
+    <input type="submit" value="Upload Pcap" name="submit">
+</form>
+'''
+f.write(templatestr.format('Upload', uploadForm, "", ""))
 f.close()
+
+# attack page
+f = open(os.path.join(basepath, "attack.html"), "w")
+attackForm = '''
+<form action="http://localhost:8000/api/attack/" method="get">
+    <label for="ip">IP Address: </label>
+    <input type="text" id="ip" name="ip"><br>
+    <input type="submit">
+</form>
+'''
+f.write(templatestr.format('Attack', attackForm, "", ""))
+f.close()
+
+
+# pcapreporter page
+f = open(os.path.join(basepath, "pcapreporter.html"), "w")
+pcapreporterForm = '''
+<form action="http://localhost:8000/api/pcapreporter/" method="get">
+    <label for="ip">Pcap: </label>
+    <input type="text" id="pcap" name="pcap"><br>
+    <label for="ip">Name: </label>
+    <input type="text" id="name" name="name"><br>
+    <input type="submit">
+</form>
+'''
+f.write(templatestr.format('Pcapreporter', pcapreporterForm, "", ""))
+f.close()
+
 

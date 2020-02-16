@@ -33,18 +33,18 @@ async def upload_pcap(file: UploadFile = File(...)):
         cmd.append(newfileLocation)
         cmd.append(file.filename)
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        p.wait()
+        #p.wait()
         return {"message": "success"}
     except:
         return {"message": "failure"}
 
 # calls pcapreporter as if on the command line
 # pcapreporter interface: pcapreporter.py [pcap] [test name]
-@app.post("/api/pcapreporter/")
+@app.get("/api/pcapreporter/")
 async def pcapreporter(pcap: str="30m", name: str="UnnamedTest"):
     try:
-        print("pcap: " + pcap)
-        print("name: " + name)
+        #print("pcap: " + pcap)
+        #print("name: " + name)
         cmd = []
         cmd.append("pcapreporter.py")
         cmd.append(pcap)
@@ -57,7 +57,7 @@ async def pcapreporter(pcap: str="30m", name: str="UnnamedTest"):
 
 # calls attack script as if on the command line
 # attack script interface: attack.py [ip]
-@app.post("/api/attack/")
+@app.get("/api/attack/")
 async def attack(ip: str):
     try:
         cmd = []
