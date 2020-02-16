@@ -7,7 +7,7 @@ from pathlib import Path
 # only expose this api to trusted users via SSH forwarding
 
 # pcap uploads directory
-pcapDir = "/root/uploads"
+pcapDir = "/uploads"
 
 # make the uploads dir if it doesnt exist
 p = Path(pcapDir)
