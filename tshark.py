@@ -18,7 +18,7 @@ parser.add_argument('outdir', help='The directory to write the report and relate
 args = parser.parse_args()
 
 # protocols to file carve from
-protocols = ['http']
+protocols = ['http', 'tftp', 'smb', 'imf', 'dicom']
 # separator to use in the reports. tabs are a terrible choice.
 separator = ','
 # make the tshark file carve dir
