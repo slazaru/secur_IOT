@@ -18,6 +18,10 @@ zeekLocation = "/opt/zeek/bin/zeek"
 fileExtractLocation = "/opt/zeek/share/zeek/policy/frameworks/files/extract-all-files.zeek"
 # location of html generator script
 generatorLocation = "/root/secur_IOT/generate.py"
+# location of the suricata binary
+suricataLocation = "suricata"
+# location of the suricata configuration file
+suricataConfLocation = "/etc/suricata/suricata.yaml"
 
 import argparse
 import os
@@ -38,6 +42,43 @@ parser.add_argument('pcap', help='The pcap to process. Can be a single .pcap fil
 parser.add_argument('name', help='The the name of the test so you can identify it on the home page')
 parser.add_argument('-hf', '--hostsfile', help='The hostsfile to use. The hostsfile labels the nodes in the graphs produced. By default, the hostsfile in /root/exampe_hostsfile will be used')
 args = parser.parse_args()
+
+# run suricata with pcap input and spit out the files in a dir called "suricata"
+def suricata():
+    cmd = []
+    cmd.append(suricataLocation)
+    cmd.append("-c")
+    cmd.append(suricataConfLocation)
+    cmd.append("-r")
+    cmd.append(pcapLocation)
+    cmd.append("-l")
+    suffix = "suricata"
+    newdir = os.path.join(dir, suffix)
+    p = Path(newdir)
+    p.mkdir(mode=0o755, parents=True, exist_ok=True)
+    cmd.append(newdir)
+    print("Running " + " ".join(cmd))
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
+    p.wait()
+    for line in p.stdout:
+        print(line)
+    for line in p.stderr:
+        print(line)
+    # write the suricata logs report
+    os.chdir(newdir)
+    reportf = open(os.path.join(dir, "suricata.html"), "w")
+    reportf.write("<!DOCTYPE html>\n <html lang=\"en\">\n <head>\n <title>Suricata Report</title>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <link rel=\"stylesheet\" href=\"../bootstrap.min.css\">\n </head>\n <body>\n")
+    for file in os.listdir(newdir):
+        if os.path.getsize(file) == 0: continue # ignore empty files
+        f = open(file, "r")
+        reportf.write("<h3><a href=\"" + os.path.join(os.path.basename(newdir), file)  + "\">" + file + "</a></h3>\n")
+        reportf.write("<pre>\n")
+        for i,line in enumerate(f):
+            reportf.write(line)
+        reportf.write("</pre>\n")
+        f.close()
+    reportf.write("</body>\n")
+    reportf.close()
 
 def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
     if restrictmac == None:
@@ -177,7 +218,7 @@ def tshark():
     for el in res:
         print(el.decode('utf-8'))
 
-# the pcap report dir is mac_pcaptimeframe/pcapname_pcapreport
+# the pcap report dir
 dir = os.path.join('/var/www/html/')
 dirname = os.path.basename(args.name) + "_" + os.path.basename(args.pcap) + "_" + "pcapreport"
 dir = os.path.join(dir, dirname)
@@ -259,6 +300,9 @@ for line in f:
     pcapgrok(hostsfile, 2, pair)
 # run once without MAC address restrictions
 pcapgrok(args.hostsfile,2)
+
+# run suricata
+suricata()
 
 # regenerate home page
 cmd = []
