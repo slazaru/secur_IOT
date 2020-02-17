@@ -86,6 +86,7 @@ def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
         suffix = "AllDevices"
     else:
         suffix = restrictmac[0] + "_" +restrictmac[1]
+    suffix += "Graph"
     newdir = os.path.join(dir, suffix)
     p = Path(newdir)
     p.mkdir(mode=0o755, parents=True, exist_ok=True)
@@ -124,9 +125,9 @@ def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
         print(line.decode('ascii'))
     # the pcapgrok report
     if restrictmac is not None:
-        reportfname = os.path.join(dir, restrictmac[0] + ".html")
+        reportfname = os.path.join(dir, restrictmac[0] + "Graph" + ".html")
     else:
-        reportfname = os.path.join(dir, "AllDevices" + ".html")
+        reportfname = os.path.join(dir, "AllDevicesGraph" + ".html")
     for file in os.listdir(newdir):
         if file[-3:] != "pdf": #only grab pdfs
             continue
@@ -180,6 +181,8 @@ def zeek():
     # write the zeek logs report
     reportf = open(os.path.join(dir, "zeek.html"), "w")
     reportf.write("<!DOCTYPE html>\n <html lang=\"en\">\n <head>\n <title>Zeek Report</title>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <link rel=\"stylesheet\" href=\"../bootstrap.min.css\">\n </head>\n <body>\n")
+    # carved files
+    reportf.write("<h3><a href=\"" + os.path.join(os.path.basename(newdir), "extract_files")  + "\">" + "Carved Files" + "</a></h3>\n")
     for file in os.listdir(newdir):
         if ".html" in file: continue # skip the report itself
         if "extract" in file: continue # skip the extract files dir

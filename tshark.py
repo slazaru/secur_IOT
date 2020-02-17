@@ -64,6 +64,9 @@ def writeReport():
     # write a report in the directory that was supplied to us
     reportf = open(os.path.join(args.outdir, "tshark_report.html"), "w")
     reportf.write("<!DOCTYPE html>\n <html lang=\"en\">\n <head>\n <title>Tshark Report</title>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <link rel=\"stylesheet\" href=\"../bootstrap.min.css\">\n </head>\n <body>\n")
+    # carved files link
+    reportf.write("<h3><a href=\"" + os.path.basename(fileDir)  + "\">" + "Carved Files" + "</a> </h3>\n")
+    # logs
     for file in os.listdir(logDir):
         reportf.write("<h3><a href=\"" + os.path.join(os.path.basename(logDir), file)  + "\">" + file + "</a> </h3>\n")
         reportf.write("<pre>")
