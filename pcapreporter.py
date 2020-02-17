@@ -80,6 +80,7 @@ def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
         print(line.decode('ascii'))
     for line in p.stderr:
         print(line.decode('ascii'))
+    # the pcapgrok report
     if restrictmac is not None:
         reportfname = os.path.join(dir, restrictmac[0] + ".html")
     else:
@@ -193,9 +194,10 @@ if ".pcap" in args.pcap: # single pcap
     infname = os.path.abspath(args.pcap)
     cmd = []
     cmd.append("cp")
-    cmd.append(os.path.abspath(infname)) # careful abs path vs relative
-    pcapLocation = os.path.join(dir, infname)
+    cmd.append(infname) # careful abs path vs relative
+    pcapLocation = os.path.join(dir, args.name + "_" + os.path.basename(infname))
     cmd.append(pcapLocation)
+    print("Running: " + " ".join(cmd))
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
     p.wait()
     for line in p.stdout:
