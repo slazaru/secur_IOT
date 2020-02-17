@@ -67,7 +67,7 @@ for file in os.listdir(basepath): #grab pcapreport dirs
     if len(os.listdir(os.path.join(basepath,file))) < 1: continue
     resultstr += "<tr style=\"height:100%;\">"
     name = file.split("_")
-    resultstr += "<th scope=\"row\"><p class=\"font-weight-bold\">" +  datetime.utcfromtimestamp(int(os.path.getmtime(os.path.join(basepath, file)))).strftime('%Y-%m-%d %H:%M:%S') + "</p></th>\n"
+    resultstr += "<th scope=\"row\"><p class=\"font-weight-bold\">" +  datetime.fromtimestamp(int(os.path.getmtime(os.path.join(basepath, file)))).strftime('%Y-%m-%d %H:%M:%S') + "</p></th>\n"
     resultstr += "<td><p>" + name[0] + "</p></td>"
     # get the pcap file first
     for el in os.listdir(os.path.join(basepath,file)):

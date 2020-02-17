@@ -66,7 +66,13 @@ def writeReport():
     reportf.write("<!DOCTYPE html>\n <html lang=\"en\">\n <head>\n <title>Tshark Report</title>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <link rel=\"stylesheet\" href=\"../bootstrap.min.css\">\n </head>\n <body>\n")
     # carved files link
     reportf.write("<h3><a href=\"" + os.path.basename(fileDir)  + "\">" + "Carved Files" + "</a> </h3>\n")
+    # if a carved file is named "index.html", nginx globs onto it, little hack to fix that
+    os.chdir(fileDir)
+    for file in os.listdir(fileDir):
+        if "index.html" in file:
+            os.rename(file, "_" + file)
     # logs
+    os.chdir(logDir)
     for file in os.listdir(logDir):
         reportf.write("<h3><a href=\"" + os.path.join(os.path.basename(logDir), file)  + "\">" + file + "</a> </h3>\n")
         reportf.write("<pre>")
