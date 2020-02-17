@@ -70,6 +70,7 @@ def suricata():
     reportf.write("<!DOCTYPE html>\n <html lang=\"en\">\n <head>\n <title>Suricata Report</title>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <link rel=\"stylesheet\" href=\"../bootstrap.min.css\">\n </head>\n <body>\n")
     for file in os.listdir(newdir):
         if os.path.getsize(file) == 0: continue # ignore empty files
+        if "eve.json" in file: continue # eve.json is just a tcpflow file, not very useful, ignore
         f = open(file, "r")
         reportf.write("<h3><a href=\"" + os.path.join(os.path.basename(newdir), file)  + "\">" + file + "</a></h3>\n")
         reportf.write("<pre>\n")
@@ -236,7 +237,7 @@ if ".pcap" in args.pcap: # single pcap
     cmd = []
     cmd.append("cp")
     cmd.append(infname) # careful abs path vs relative
-    pcapLocation = os.path.join(dir, args.name + "_" + os.path.basename(infname))
+    pcapLocation = os.path.join(dir, os.path.basename(infname))
     cmd.append(pcapLocation)
     print("Running: " + " ".join(cmd))
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
@@ -261,7 +262,7 @@ elif re.search('[\d]{1,3}m', args.pcap) or re.search('[\d]{1,3}h', args.pcap):
     res = currtime - timedelta(hours=numhours, minutes=numminutes)
     print("interval is " + str(res) + "=" + str(currtime))
     ps = pcap_period_extract.pcapStore(pcapstoreLocation)
-    pcapLocation = os.path.join(dir, args.name + "_" + args.pcap + ".pcap")
+    pcapLocation = os.path.join(dir, args.pcap + ".pcap")
     ps.writePeriod(res, currtime, pcapLocation)
 else: # time interval separated by = eg 2020-02-03-18:30:00=2020-02-03-19:00:00
     interval = args.pcap.split('=')
@@ -269,7 +270,7 @@ else: # time interval separated by = eg 2020-02-03-18:30:00=2020-02-03-19:00:00
     ps = pcap_period_extract.pcapStore(pcapstoreLocation)
     sdt = datetime.strptime(interval[0], FSDTFORMAT)
     edt = datetime.strptime(interval[1], FSDTFORMAT)
-    pcapLocation = os.path.join(dir, args.name + "_" + args.pcap + ".pcap")
+    pcapLocation = os.path.join(dir, args.pcap + ".pcap")
     ps.writePeriod(sdt, edt, pcapLocation)
 
 # run zeek
