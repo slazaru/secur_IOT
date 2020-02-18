@@ -79,12 +79,12 @@ for file in os.listdir(basepath): #grab pcapreport dirs
             resultstr += "<td><a href=\"./" + os.path.join(file, el) + "\">" + "Zeek" + "</a></td>\n"
         elif "suricata.html" in el:
             resultstr += "<td><a href=\"./" + os.path.join(file, el) + "\">" + "Suricata" + "</a></td>\n"
+        elif "snort.html" in el:
+            resultstr += "<td><a href=\"./" + os.path.join(file, el) + "\">" + "Snort" + "</a></td>\n"
         elif "tshark_report.html" in el:
             resultstr += "<td><a href=\"./" + os.path.join(file, el) + "\">" + "Tshark" + "</a></td>\n"
         elif ".html" in el: #everything else
             resultstr += "<td><a href=\"./" + os.path.join(file, el) + "\">" + el[:-5] + "</a></td>\n"
-        # hack for extracting wordclouds from pcapgrok 
-        #elif "wordclouds" in el:
     resultstr+= "</tr>\n"
 resultstr += "</table>"
 

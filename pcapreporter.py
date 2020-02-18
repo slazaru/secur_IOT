@@ -18,10 +18,14 @@ zeekLocation = "/opt/zeek/bin/zeek"
 fileExtractLocation = "/opt/zeek/share/zeek/policy/frameworks/files/extract-all-files.zeek"
 # location of html generator script
 generatorLocation = "/root/secur_IOT/generate.py"
-# location of the suricata binary
+# location of the suricata binary in PATH
 suricataLocation = "suricata"
 # location of the suricata configuration file
 suricataConfLocation = "/etc/suricata/suricata.yaml"
+# location of snort binary in PATH
+snortLocation = "snort"
+# location of snort conf file
+snortConfLocation = "/etc/snort/snort.conf"
 
 import argparse
 import os
@@ -58,10 +62,8 @@ def suricata():
     p.mkdir(mode=0o755, parents=True, exist_ok=True)
     cmd.append(newdir)
     print("Running " + " ".join(cmd))
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
+    p = subprocess.Popen(cmd, stderr=subprocess.PIPE, shell=False)
     p.wait()
-    for line in p.stdout:
-        print(line)
     for line in p.stderr:
         print(line)
     # write the suricata logs report
@@ -75,6 +77,43 @@ def suricata():
         reportf.write("<h3><a href=\"" + os.path.join(os.path.basename(newdir), file)  + "\">" + file + "</a></h3>\n")
         reportf.write("<pre>\n")
         for i,line in enumerate(f):
+            reportf.write(line)
+        reportf.write("</pre>\n")
+        f.close()
+    reportf.write("</body>\n")
+    reportf.close()
+
+# run snort with pcap input and spit out the files in a dir called "snort"
+def snort():
+    cmd = []
+    cmd.append(snortLocation)
+    cmd.append("-c")
+    cmd.append(snortConfLocation)
+    cmd.append("-r")
+    cmd.append(pcapLocation)
+    cmd.append("-l")
+    # output dir
+    suffix = "snort"
+    newdir = os.path.join(dir, suffix)
+    p = Path(newdir)
+    p.mkdir(mode=0o755, parents=True, exist_ok=True)
+    cmd.append(newdir)
+    # snort is noisy .. silence it
+    cmd.append("-q")
+    print("Running " + " ".join(cmd))
+    p = subprocess.Popen(cmd, shell=False)
+    p.wait()
+    # write the snort logs report
+    os.chdir(newdir)
+    reportf = open(os.path.join(dir, "snort.html"), "w")
+    reportf.write("<!DOCTYPE html>\n <html lang=\"en\">\n <head>\n <title>Snort Report</title>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n  <link rel=\"stylesheet\" href=\"../bootstrap.min.css\">\n </head>\n <body>\n")
+    for file in os.listdir(newdir):
+        if os.path.getsize(file) == 0: continue # ignore empty files
+        if "snort.log" in file: continue # ignore tcpdump files
+        f = open(file, "r")
+        reportf.write("<h3><a href=\"" + os.path.join(os.path.basename(newdir), file)  + "\">" + file + "</a></h3>\n")
+        reportf.write("<pre>\n")
+        for line in f:
             reportf.write(line)
         reportf.write("</pre>\n")
         f.close()
@@ -117,10 +156,8 @@ def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
     else:
         cmd.append(".pdf")
     print("\nRunning " + " ".join(cmd))
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
+    p = subprocess.Popen(cmd, stderr=subprocess.PIPE, shell=False)
     p.wait()
-    for line in p.stdout:
-        print(line.decode('ascii'))
     for line in p.stderr:
         print(line.decode('ascii'))
     # the pcapgrok report
@@ -139,7 +176,7 @@ def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
         cmd.append("-r")
         cmd.append("100")
         print("running " + " ".join(cmd))
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
+        p = subprocess.Popen(cmd, stderr=subprocess.PIPE, shell=False)
         p.wait()
     #print("number of items in dir:" + str(len(os.listdir(newdir))))
     if len(os.listdir(newdir)) < 2: return # pcapgrok has logs in cwd ..
@@ -178,9 +215,8 @@ def wordclouds():
         cmd.append("-r")
         cmd.append("100") # lower pixel density ..
         print("running " + " ".join(cmd))
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
+        p = subprocess.Popen(cmd, stderr=subprocess.PIPE, shell=False)
         p.wait()
-    print("number of items in dir:" + str(len(os.listdir(wordclouddir))))
     if len(os.listdir(wordclouddir)) < 2: return # pcapgrok has logs in cwd ..
     f = open(reportfname, "w")
     f.write("<html>\n<table border=\"1\">\n")
@@ -317,6 +353,9 @@ else: # time interval separated by = eg 2020-02-03-18:30:00=2020-02-03-19:00:00
     edt = datetime.strptime(interval[1], FSDTFORMAT)
     pcapLocation = os.path.join(dir, args.pcap + ".pcap")
     ps.writePeriod(sdt, edt, pcapLocation)
+
+# run snort report generator
+snort()
 
 # run zeek report generator
 zeek()
