@@ -136,6 +136,8 @@ def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
         cmd.append(os.path.join(newdir, file))
         cmd.append(os.path.join(newdir, file))
         cmd.append("-png")
+        cmd.append("-r")
+        cmd.append("100")
         print("running " + " ".join(cmd))
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
         p.wait()
@@ -148,15 +150,55 @@ def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
         if file[-3:] != "pdf": #only grab pdfs
             continue
         if curr == 0:
-            f.write("<tr style=\"height:100%;\">\n")
+            f.write("<tr style=\"width:100%;\">\n")
         f.write("<th><a href=\"" + os.path.join(suffix,file) + "\"><img src=\"" + os.path.join(suffix,file) + "-1.png" + "\" style=\"width:100%;\"></a></th>")
         curr = curr +1
         if curr % cols == 0:
             curr = 0
     f.write("</table>\n</html>")
     f.close()
-    print("\nreportfname : " + reportfname)
-    print("\nnewdir : " + newdir)
+    #print("\nreportfname : " + reportfname)
+    #print("\nnewdir : " + newdir)
+    print("\nreport written to " + reportfname)
+
+# writes a wordclouds report based on the AllDevices pcapgrok
+def wordclouds():
+    reportfname = os.path.join(dir, "Wordclouds" + ".html")
+    # make some assumptions about where pcapgrok() put the files ..
+    wordclouddir = os.path.join(dir, "AllDevicesGraph")
+    wordclouddir = os.path.join(wordclouddir, "wordclouds")
+    for file in os.listdir(wordclouddir):
+        if file[-3:] != "pdf": #only grab pdfs
+            continue
+        cmd = []
+        cmd.append("pdftoppm")
+        cmd.append(os.path.join(wordclouddir, file))
+        cmd.append(os.path.join(wordclouddir, file))
+        cmd.append("-png")
+        cmd.append("-r")
+        cmd.append("100") # lower pixel density ..
+        print("running " + " ".join(cmd))
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
+        p.wait()
+    print("number of items in dir:" + str(len(os.listdir(wordclouddir))))
+    if len(os.listdir(wordclouddir)) < 2: return # pcapgrok has logs in cwd ..
+    f = open(reportfname, "w")
+    f.write("<html>\n<table border=\"1\">\n")
+    curr = 0
+    basedir = os.path.join("AllDevicesGraph", "wordclouds") # make assumptions about files locations..
+    for file in os.listdir(wordclouddir):
+        if file[-3:] != "pdf": #only grab pdfs
+            continue
+        if curr == 0:
+            f.write("<tr style=\"width:100%;\">\n")
+        f.write("<th><a href=\"" + os.path.join(basedir, file) + "\"><img src=\"" + os.path.join(basedir, file) + "-1.png" + "\" style=\"width:100%;\"></a></th>")
+        curr = curr +1
+        if curr % cols == 0:
+            curr = 0
+    f.write("</table>\n</html>")
+    f.close()
+    #print("\nreportfname : " + reportfname)
+    #print("\nwordclouddir : " + wordclouddir)
     print("\nreport written to " + reportfname)
 
 # run zeek with pcap input and spit out the files in a dir called "zeek"
@@ -276,13 +318,13 @@ else: # time interval separated by = eg 2020-02-03-18:30:00=2020-02-03-19:00:00
     pcapLocation = os.path.join(dir, args.pcap + ".pcap")
     ps.writePeriod(sdt, edt, pcapLocation)
 
-# run zeek
+# run zeek report generator
 zeek()
 
-# run tshark file extraction
+# run tshark report generator
 tshark()
 
-# run pcapgrok
+# run pcapgrok report generator
 hostsfile = ''
 if args.hostsfile:
     hostsfile = os.path.abspath(args.hostsfile)
@@ -301,11 +343,13 @@ for line in f:
     macaddr = line[5].strip()
     name = line[1].strip()
     pair = (name, macaddr)
-    pcapgrok(hostsfile, 2, pair)
+    #pcapgrok(hostsfile, 2, pair)
 # run once without MAC address restrictions
 pcapgrok(args.hostsfile,2)
+# run wordclouds based on the pcapgrok without restrictions
+wordclouds()
 
-# run suricata
+# run suricata report generator
 suricata()
 
 # regenerate home page
