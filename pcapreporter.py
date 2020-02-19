@@ -204,6 +204,8 @@ def wordclouds():
     # make some assumptions about where pcapgrok() put the files ..
     wordclouddir = os.path.join(dir, "AllDevicesGraph")
     wordclouddir = os.path.join(wordclouddir, "wordclouds")
+    if not os.path.isdir(wordclouddir): return # exit if the dir wasn't created
+    if len(os.listdir(wordclouddir)) < 1: return # exit if there are no wordclouds
     for file in os.listdir(wordclouddir):
         if file[-3:] != "pdf": #only grab pdfs
             continue
@@ -217,7 +219,6 @@ def wordclouds():
         print("running " + " ".join(cmd))
         p = subprocess.Popen(cmd, stderr=subprocess.PIPE, shell=False)
         p.wait()
-    if len(os.listdir(wordclouddir)) < 2: return # pcapgrok has logs in cwd ..
     f = open(reportfname, "w")
     f.write("<html>\n<table border=\"1\">\n")
     curr = 0
@@ -233,8 +234,6 @@ def wordclouds():
             curr = 0
     f.write("</table>\n</html>")
     f.close()
-    #print("\nreportfname : " + reportfname)
-    #print("\nwordclouddir : " + wordclouddir)
     print("\nreport written to " + reportfname)
 
 # run zeek with pcap input and spit out the files in a dir called "zeek"
