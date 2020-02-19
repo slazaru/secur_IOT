@@ -381,7 +381,7 @@ for line in f:
     macaddr = line[5].strip()
     name = line[1].strip()
     pair = (name, macaddr)
-    #pcapgrok(hostsfile, 2, pair)
+    pcapgrok(hostsfile, 2, pair)
 # run once without MAC address restrictions
 pcapgrok(args.hostsfile,2)
 # run wordclouds based on the pcapgrok without restrictions
