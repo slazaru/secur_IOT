@@ -174,12 +174,12 @@ def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
         cmd.append(os.path.join(newdir, file))
         cmd.append("-png")
         cmd.append("-r")
-        cmd.append("100")
+        cmd.append("50")
         print("running " + " ".join(cmd))
         p = subprocess.Popen(cmd, stderr=subprocess.PIPE, shell=False)
         p.wait()
     #print("number of items in dir:" + str(len(os.listdir(newdir))))
-    if len(os.listdir(newdir)) < 2: return # pcapgrok has logs in cwd ..
+    if len(os.listdir(newdir)) < 3: return # always has wordclouds dir and log file
     f = open(reportfname, "w")
     f.write("<html>\n<table border=\"1\">\n")
     curr = 0
@@ -215,7 +215,7 @@ def wordclouds():
         cmd.append(os.path.join(wordclouddir, file))
         cmd.append("-png")
         cmd.append("-r")
-        cmd.append("100") # lower pixel density ..
+        cmd.append("70") # lower pixel density ..
         print("running " + " ".join(cmd))
         p = subprocess.Popen(cmd, stderr=subprocess.PIPE, shell=False)
         p.wait()

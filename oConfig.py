@@ -2,12 +2,12 @@
 
 # nmap
 nmapCmd = ['nmap', '-Pn']
-retries = '2'
+retries = '5'
 tcpScanType = '-sS'
 timing = '-T5'
-includeFiltered = False
+includeFiltered = True
 nmapOSFile = "OS_from_nmap"
-maxRTT = "500ms"
+maxRTT = "200ms"
 minRate = "1000"
 
 # wfuzz

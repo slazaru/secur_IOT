@@ -51,7 +51,8 @@ def runAllTests(directory, ipaddr, debugFlag=False):
 
 def appendToReport(fname, cmd):
     reportf = open(reportFile, "a")
-    reportf.write("<h3>" + ' '.join(cmd) + "</h3>")
+    reportf.write("<h3><a href=\"" + os.path.basename(fname)  + "\">" + " ".join(cmd) + "</a></h3>\n")
+    #reportf.write("<h3>" + ' '.join(cmd) + "</h3>")
     f = open(fname, "r")
     for line in f:
         if "<script" in line:
@@ -265,10 +266,10 @@ def nmapBasicScan(lo, hi, service):
 
 # performs depth scans, relies on previous basic output
 def nmapDepthScan(lo, hi, service):
-    prevf = os.path.join(dir, service + "_" + str(lo) + "-" + str(hi) + "_basic")
+    prevf = os.path.join(dir, service + "_" + str(lo) + "-" + str(hi) + "_quick")
     if not os.path.exists(prevf):
         # havent performed a basic scan yet, do this before continuing
-        nmapBasicScan(lo, hi, service)
+        nmapQuickScan(lo, hi, service)
     if not os.path.exists(prevf):
         # wasn't able to extract any ports
         return
@@ -276,11 +277,13 @@ def nmapDepthScan(lo, hi, service):
     global enum4linuxDone
     for line in lines:
         if "https" in line:
-            wfuzz(line, cfg.wfuzzWordlist1, cfg.wfuzzExtensions1, True, False, False)
+            wfuzz(line, cfg.wfuzzWordlist1, cfg.wfuzzExtensions1, True, True, True)
+            wfuzz(line, cfg.wfuzzWordlist1, cfg.wfuzzExtensions1, True, False, True)
             sslscan(line)
             nikto(line, True)
         elif "http" in line:
-            wfuzz(line, cfg.wfuzzWordlist1, cfg.wfuzzExtensions1, False, False, False)
+            wfuzz(line, cfg.wfuzzWordlist1, cfg.wfuzzExtensions1, False, True, True) # with extensions
+            wfuzz(line, cfg.wfuzzWordlist1, cfg.wfuzzExtensions1, False, False, True) # no extensions
             nikto(line, False)
         elif "Joomla" in line:
             joomscan(line)
@@ -600,7 +603,7 @@ def sslscan(line):
     print("Running " + ' '.join(cmd))
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     p.wait()
-    outfname = os.path.join(dir, "sslscan_" + port, "w")
+    outfname = os.path.join(dir, "sslscan_" + port)
     outf = open(outfname, "w")
     for line in p.stdout:
         line=line.decode('ascii').strip()
@@ -627,8 +630,6 @@ def wfuzz(line, wordlist, extensions, https=False, useExtensions=False, recursiv
     cmd.append(cfg.wfuzzoutputFormat)
     cmd.append("-t")
     cmd.append(cfg.wfuzzthreads)
-    cmd.append("-R")
-    cmd.append("1")
     target = ""
     if https == True:
         target = "https://"
