@@ -38,12 +38,12 @@ def runAllTests(directory, ipaddr, debugFlag=False):
     nmapDepthScan(1, 1000, 'tcp')
     nmapDepthScan(1, 1000, 'udp')
     cameradar()
-    #nmapQuickScan(1000, 65535, 'tcp')
-    #nmapBasicScan(1000, 65535, 'tcp')
-    #nmapDepthScan(1000, 65535, 'tcp')
-    #nmapQuickScan(1000, 65535, 'udp')
-    #nmapBasicScan(1000, 65535, 'udp')
-    #nmapDepthScan(1000, 65535, 'udp')
+    nmapQuickScan(1000, 65535, 'tcp')
+    nmapBasicScan(1000, 65535, 'tcp')
+    nmapDepthScan(1000, 65535, 'tcp')
+    nmapQuickScan(1000, 65535, 'udp')
+    nmapBasicScan(1000, 65535, 'udp')
+    nmapDepthScan(1000, 65535, 'udp')
     reportf = open(reportFile, "a")
     reportf.write("</body>\n </html>\n")
     reportf.close()
@@ -627,6 +627,8 @@ def wfuzz(line, wordlist, extensions, https=False, useExtensions=False, recursiv
     cmd.append(cfg.wfuzzoutputFormat)
     cmd.append("-t")
     cmd.append(cfg.wfuzzthreads)
+    cmd.append("-R")
+    cmd.append("1")
     target = ""
     if https == True:
         target = "https://"
