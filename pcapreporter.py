@@ -124,10 +124,11 @@ def snort():
     reportf.close()
 
 def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
+    suffix = "_"
     if restrictmac == None:
-        suffix = "AllDevices"
+        suffix += "AllDevices"
     else:
-        suffix = restrictmac
+        suffix += restrictmac
     suffix += "Graph"
     newdir = os.path.join(dir, suffix)
     p = Path(newdir)
@@ -420,23 +421,25 @@ else:
 # if no mac filter was supplied, run pcapgrok once with no filter
 if args.macs:
     for mac in macs:
-        #pass
         pcapgrok(hostsfile, 2, mac)
 else:
-    #pass
     pcapgrok(hostsfile,2)
 
 # run wordclouds report generator based on pcapgrok output
 if args.macs:
     paths = []
     for mac in macs:
-        paths.append(os.path.join(dir, mac + "Graph"))
+        paths.append(os.path.join(dir, "_" + mac + "Graph"))
+    print("wordcloud paths: " + " ".join(paths))
     wordclouds(paths)
 else:
-    wordclouds(os.path.join(dir, "AllDevicesGraph"))
+    paths = []
+    paths.append(os.path.join(dir, "_AllDevicesGraph"))
+    print("wordcloud path: " + " ".join(paths))
+    wordclouds(paths)
 
 # run suricata report generator
-#suricata()
+suricata()
 
 # regenerate home page
 cmd = []
