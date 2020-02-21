@@ -7,7 +7,7 @@ pcapgrokmain = "/root/pcapGrok/pcapGrok.py"
 # location of tshark.py
 tsharkLocation = "/root/secur_IOT/tshark.py"
 # columns in pcapgrok pdf reports
-cols = 3
+cols = 2
 # date format for interval input
 FSDTFORMAT = '%Y-%m-%d-%H:%M:%S'
 # pcapstore location
@@ -40,10 +40,13 @@ import dateutil
 from scapy.all import *
 import bisect
 import pathlib
+from sources import ScapySource
+from scapy.all import *
 
 parser = argparse.ArgumentParser(description='Pcap report generator')
 parser.add_argument('pcap', help='The pcap to process. Can be a single .pcap file or a timeinterval delineated with \'=\' (eg 2020-02-03-18:30:00=2020-02-03-19:00:00) or an amount of time, for example \'1h10m\' would be the last 1 hour and 10 minutes of pcaps captured on the testbed')
 parser.add_argument('name', help='The the name of the test so you can identify it on the home page')
+parser.add_argument('-m', '--macs',  help='The mac addresses to whitelist, separated by commas.')
 parser.add_argument('-hf', '--hostsfile', help='The hostsfile to use. The hostsfile labels the nodes in the graphs produced. By default, the hostsfile in /root/exampe_hostsfile will be used')
 args = parser.parse_args()
 
@@ -124,7 +127,7 @@ def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
     if restrictmac == None:
         suffix = "AllDevices"
     else:
-        suffix = restrictmac[0] + "_" +restrictmac[1]
+        suffix = restrictmac
     suffix += "Graph"
     newdir = os.path.join(dir, suffix)
     p = Path(newdir)
@@ -137,7 +140,7 @@ def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
     cmd.append("-o")
     cmd.append(newdir)
     cmd.append("-E")
-    cmd.append("fdp")
+    cmd.append("sfdp")
     cmd.append("-s")
     cmd.append("box")
     #cmd.append("-S") -S argument disables port squishing
@@ -149,10 +152,10 @@ def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
         cmd.append(str(maxnodes))
     if restrictmac is not None:
         cmd.append("-r")
-        cmd.append(restrictmac[1])
+        cmd.append(restrictmac)
     cmd.append("-p")
     if restrictmac is not None:
-        cmd.append("_" + restrictmac[0] + ".pdf")
+        cmd.append("_" + restrictmac + ".pdf")
     else:
         cmd.append(".pdf")
     print("\nRunning " + " ".join(cmd))
@@ -162,7 +165,7 @@ def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
         print(line.decode('ascii'))
     # the pcapgrok report
     if restrictmac is not None:
-        reportfname = os.path.join(dir, restrictmac[0] + "Graph" + ".html")
+        reportfname = os.path.join(dir, restrictmac + "Graph" + ".html")
     else:
         reportfname = os.path.join(dir, "AllDevicesGraph" + ".html")
     for file in os.listdir(newdir):
@@ -198,43 +201,45 @@ def pcapgrok(hf=None, maxnodes=None, restrictmac=None):
     #print("\nnewdir : " + newdir)
     print("\nreport written to " + reportfname)
 
-# writes a wordclouds report based on the AllDevices pcapgrok
-def wordclouds():
+# writes a wordclouds report based on the pcapgrok output path
+def wordclouds(pcapGrokPaths):
     reportfname = os.path.join(dir, "Wordclouds" + ".html")
-    # make some assumptions about where pcapgrok() put the files ..
-    wordclouddir = os.path.join(dir, "AllDevicesGraph")
-    wordclouddir = os.path.join(wordclouddir, "wordclouds")
-    if not os.path.isdir(wordclouddir): return # exit if the dir wasn't created
-    if len(os.listdir(wordclouddir)) < 1: return # exit if there are no wordclouds
-    for file in os.listdir(wordclouddir):
-        if file[-3:] != "pdf": #only grab pdfs
-            continue
-        cmd = []
-        cmd.append("pdftoppm")
-        cmd.append(os.path.join(wordclouddir, file))
-        cmd.append(os.path.join(wordclouddir, file))
-        cmd.append("-png")
-        cmd.append("-r")
-        cmd.append("70") # lower pixel density ..
-        print("running " + " ".join(cmd))
-        p = subprocess.Popen(cmd, stderr=subprocess.PIPE, shell=False)
-        p.wait()
     f = open(reportfname, "w")
     f.write("<html>\n<table border=\"1\">\n")
-    curr = 0
-    basedir = os.path.join("AllDevicesGraph", "wordclouds") # make assumptions about files locations..
-    for file in os.listdir(wordclouddir):
-        if file[-3:] != "pdf": #only grab pdfs
-            continue
-        if curr == 0:
-            f.write("<tr style=\"width:100%;\">\n")
-        f.write("<th><a href=\"" + os.path.join(basedir, file) + "\"><img src=\"" + os.path.join(basedir, file) + "-1.png" + "\" style=\"width:100%;\"></a></th>")
-        curr = curr +1
-        if curr % cols == 0:
-            curr = 0
+    for pcapGrokPath in pcapGrokPaths:
+        print("\nGot pcapgrokpath: " + pcapGrokPath + "\n")
+        wordclouddir = os.path.join(pcapGrokPath, "wordclouds")
+        if not os.path.isdir(wordclouddir): return # exit if the dir wasn't created
+        if len(os.listdir(wordclouddir)) < 1: return # exit if there are no wordclouds
+        for file in os.listdir(wordclouddir):
+            if file[-3:] != "pdf": #only grab pdfs
+                continue
+            cmd = []
+            cmd.append("pdftoppm")
+            cmd.append(os.path.join(wordclouddir, file))
+            cmd.append(os.path.join(wordclouddir, file))
+            cmd.append("-png")
+            cmd.append("-r")
+            cmd.append("70") # lower pixel density ..
+            print("running " + " ".join(cmd))
+            p = subprocess.Popen(cmd, stderr=subprocess.PIPE, shell=False)
+            p.wait()
+        curr = 0
+        basedir = os.path.basename(pcapGrokPath)
+        basedir = os.path.join(basedir, "wordclouds")
+        for file in os.listdir(wordclouddir):
+            if file[-3:] != "pdf": #only grab pdfs
+                continue
+            if curr == 0:
+                f.write("<tr style=\"width:100%;\">\n")
+            f.write("<th><a href=\"" + os.path.join(basedir, file) + "\"><img src=\"" + os.path.join(basedir, file) + "-1.png" + "\" style=\"width:100%;\"></a></th>")
+            curr = curr +1
+            if curr % cols == 0:
+                curr = 0
     f.write("</table>\n</html>")
     f.close()
     print("\nreport written to " + reportfname)
+
 
 # run zeek with pcap input and spit out the files in a dir called "zeek"
 def zeek():
@@ -353,6 +358,49 @@ else: # time interval separated by = eg 2020-02-03-18:30:00=2020-02-03-19:00:00
     pcapLocation = os.path.join(dir, args.pcap + ".pcap")
     ps.writePeriod(sdt, edt, pcapLocation)
 
+# parse the mac whitelist
+macs = []
+if args.macs:
+    macs = args.macs.split(',')
+    print("Got macs: " + " ".join(macs))
+else:
+    print("No mac whitelist supplied.")
+# filter the pcap based on whitelist
+if args.macs:
+    print("pcapLocation: " + pcapLocation)
+    # verify the pcap can be loaded by scapy
+    valid = False
+    try:
+        validpackets = scapy.utils.PcapReader(pcapLocation)
+        valid = True
+    except:
+        valid = False
+    if not valid:
+        print("Pcap couldnt be loaded by scapy, exiting")
+        exit()
+    # read the current pcap, filter it, then write it out
+    realFiles = []
+    realFiles.append(pcapLocation)
+    loadedPackets = ScapySource.load(realFiles)
+    pin = [] # packet input
+    for packet in loadedPackets:
+        if packet is None: continue
+        if packet.haslayer(Ether):
+            pin.append(packet)
+    pout = [] # packet output after filtration
+    for packet in pin:
+        src_mac = packet[Ether].src
+        dst_mac = packet[Ether].dst
+        for mac in macs:
+            #print("src_mac: " + src_mac + " dst_mac: " + dst_mac + " mac: " + mac)
+            if src_mac == mac or dst_mac == mac:
+                pout.append(packet)
+                break
+    p = subprocess.Popen(["rm", pcapLocation], stderr=subprocess.PIPE)
+    p.wait()
+    for line in p.stderr: print(line)
+    scapy.utils.wrpcap(pcapLocation, pout)
+
 # run snort report generator
 snort()
 
@@ -368,27 +416,27 @@ if args.hostsfile:
     hostsfile = os.path.abspath(args.hostsfile)
 else:
     hostsfile = '/root/example_hostsfile'
-# run with MAC address restrictions per line in hostsfile
-f = open(os.path.abspath(hostsfile), 'r')
-for line in f:
-    line = line.split(',')
-    if line[0] == 'ip':
-        continue # skip header line
-    if len(line) != 6:
-        print("\nimproperly formatted line in supplied hostsfile!")
-        continue
-    ipaddr = line[0].strip()
-    macaddr = line[5].strip()
-    name = line[1].strip()
-    pair = (name, macaddr)
-    pcapgrok(hostsfile, 2, pair)
-# run once without MAC address restrictions
-pcapgrok(args.hostsfile,2)
-# run wordclouds based on the pcapgrok without restrictions
-wordclouds()
+# if mac filter was supplied, run pcapgrok in restriction mode once per mac address
+# if no mac filter was supplied, run pcapgrok once with no filter
+if args.macs:
+    for mac in macs:
+        #pass
+        pcapgrok(hostsfile, 2, mac)
+else:
+    #pass
+    pcapgrok(hostsfile,2)
+
+# run wordclouds report generator based on pcapgrok output
+if args.macs:
+    paths = []
+    for mac in macs:
+        paths.append(os.path.join(dir, mac + "Graph"))
+    wordclouds(paths)
+else:
+    wordclouds(os.path.join(dir, "AllDevicesGraph"))
 
 # run suricata report generator
-suricata()
+#suricata()
 
 # regenerate home page
 cmd = []
