@@ -90,7 +90,7 @@ resultstr += "</table>"
 
 # attack script reports
 attackstr = "<div class=\"page-header\">\n<h4>Attack Reports</h4>\n</div><br><table class=\"table\" border=\"0\">\n"
-attackstr += "<thead>\n <tr>\n <th scope=\"col\">Date</th>\n <th scope=\"col\">Device</th>\n <th scope=\"col\">Report</th>\n <th scope=\"col\">Files</th>\n </tr>\n </thead>\n <tbody>\n"
+attackstr += "<thead>\n <tr>\n <th scope=\"col\">Date</th>\n <th scope=\"col\">Test</th>\n <th scope=\"col\">Report</th>\n <th scope=\"col\">Files</th>\n </tr>\n </thead>\n <tbody>\n"
 for file in os.listdir(basepath): #grab attack script dirs
     if not os.path.isdir(os.path.join(basepath, file)): continue
     if "attack" not in file: continue # directories with "attack" in it are attack results
@@ -120,6 +120,7 @@ f.close()
 # upload page
 f = open(os.path.join(basepath, "upload.html"), "w")
 uploadForm = '''
+Note that this feature is only accessible over the local network
 <form action="http://localhost:8000/api/upload_pcap/" method="post" enctype="multipart/form-data">
     <input type="file" name="file" id="file">
     <input type="submit" value="Upload Pcap" name="submit">
@@ -131,6 +132,7 @@ f.close()
 # attack page
 f = open(os.path.join(basepath, "attack.html"), "w")
 attackForm = '''
+Note that this feature is only accessible over the local network
 <form action="http://localhost:8000/api/attack/" method="get">
     <label for="ip">IP Address: </label>
     <input type="text" id="ip" name="ip"><br>
@@ -144,6 +146,7 @@ f.close()
 # pcapreporter page
 f = open(os.path.join(basepath, "pcapreporter.html"), "w")
 pcapreporterForm = '''
+Note that this feature is only accessible over the local network
 <form action="http://localhost:8000/api/pcapreporter/" method="get">
     <label for="ip">Pcap: </label>
     <input type="text" id="pcap" name="pcap"><br>
